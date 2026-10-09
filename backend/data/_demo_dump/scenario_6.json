@@ -1,0 +1,485 @@
+{
+  "input_text": "这次促销活动的效果为什么不如预期？",
+  "conversation_id": 33,
+  "task_id": 45,
+  "task_status": "success",
+  "error_message": null,
+  "duration_ms": 310,
+  "poll_seconds": 0.52,
+  "tool_call_count": 6,
+  "tool_calls": [
+    {
+      "seq": 1,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT ROUND(SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN gmv ELSE 0 END), 2) AS base_gmv,\n                   ROUND(SUM(CASE WHEN stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN gmv ELSE 0 END), 2) AS anomaly_gmv,\n                   SUM(CASE WHEN stat_date BET…",
+        "limit": 1
+      },
+      "status": "success",
+      "summary": "返回 1 行数据，字段 base_gmv, anomaly_gmv, base_order_cnt, anomaly_order_cnt, base_refund, anomaly_refund。示例：base_gmv=11165493.54；anomaly_gmv=8277863.44；base_order_cnt=22648.0；anomaly_order_cnt=16873.0；base_refund=490568.27；anomaly_refund=643120.01",
+      "duration_ms": 1,
+      "started_at": "2026-10-08T19:31:00.415367",
+      "finished_at": "2026-10-08T19:31:00.415367",
+      "step_key": "overview",
+      "step_title": "大盘经营概览（GMV / 订单 / 退款）"
+    },
+    {
+      "seq": 2,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT ch.channel_name, ch.channel_type,\n                   ROUND(SUM(CASE WHEN s.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN s.gmv ELSE 0 END), 2) AS base_gmv,\n                   ROUND(SUM(CASE WHEN s.stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN s.gmv ELSE 0 END), 2) A…",
+        "limit": 20
+      },
+      "status": "success",
+      "summary": "返回 6 行数据，字段 channel_name, channel_type, base_gmv, anomaly_gmv。示例：channel_name=内容-种草；channel_type=content；base_gmv=2134943.09；anomaly_gmv=1926205.0",
+      "duration_ms": 1,
+      "started_at": "2026-10-08T19:31:00.427899",
+      "finished_at": "2026-10-08T19:31:00.427899",
+      "step_key": "channel",
+      "step_title": "渠道结构拆分"
+    },
+    {
+      "seq": 3,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT c.category_name,\n                   ROUND(SUM(CASE WHEN r.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN r.sale_amount ELSE 0 END), 2) AS base_amount,\n                   ROUND(SUM(CASE WHEN r.stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN r.sale_amount ELSE 0 END), 2)…",
+        "limit": 20
+      },
+      "status": "success",
+      "summary": "返回 5 行数据，字段 category_name, base_amount, anomaly_amount, anomaly_qty。示例：category_name=服饰鞋包；base_amount=3975752.0；anomaly_amount=3817195.0；anomaly_qty=16805.0",
+      "duration_ms": 7,
+      "started_at": "2026-10-08T19:31:00.447473",
+      "finished_at": "2026-10-08T19:31:00.447473",
+      "step_key": "category",
+      "step_title": "品类结构拆分"
+    },
+    {
+      "seq": 4,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT c.category_name,\n                   ROUND(AVG(p.title_length), 1) AS avg_title_len,\n                   ROUND(AVG(p.image_count), 2) AS avg_image_cnt,\n                   ROUND(AVG(p.attr_fill_rate), 1) AS avg_attr_fill\n            FROM biz_product p\n            JOIN biz_category c…",
+        "limit": 20
+      },
+      "status": "success",
+      "summary": "返回 5 行数据，字段 category_name, avg_title_len, avg_image_cnt, avg_attr_fill。示例：category_name=美妆个护；avg_title_len=11.4；avg_image_cnt=1.25；avg_attr_fill=36.3",
+      "duration_ms": 2,
+      "started_at": "2026-10-08T19:31:00.460571",
+      "finished_at": "2026-10-08T19:31:00.460571",
+      "step_key": "quality_scan",
+      "step_title": "商品目录质量体检（标题 / 主图 / 属性）"
+    },
+    {
+      "seq": 5,
+      "tool_name": "text_search",
+      "tool_args": {
+        "keyword": "归因",
+        "scope": "knowledge",
+        "limit": 5
+      },
+      "status": "success",
+      "summary": "关键词「归因」命中 3 处（knowledge 3 条）。首条来自 知识库/01_归因分析方法论.md：# 经营归因分析方法论 ## 一、归因的四步法 1. **界定问题**：把模糊的业务抱怨转成可验证的量化命题。 - 反例：「最近转化不太好」 - 正例：「美妆个",
+      "duration_ms": 1,
+      "started_at": "2026-10-08T19:31:00.473711",
+      "finished_at": "2026-10-08T19:31:00.473711",
+      "step_key": "knowledge",
+      "step_title": "检索知识库中的「归因」分析方法论"
+    },
+    {
+      "seq": 6,
+      "tool_name": "result_generate",
+      "tool_args": {
+        "scene": "generic",
+        "metrics": 9,
+        "evidence": 38
+      },
+      "status": "success",
+      "summary": "已生成标准报告：关键指标 9 项、证据 38 条、结论 320 字",
+      "duration_ms": 0,
+      "started_at": "2026-10-08T19:31:00.498493",
+      "finished_at": "2026-10-08T19:31:00.498493",
+      "step_key": "result_generate",
+      "step_title": "生成标准化分析报告"
+    }
+  ],
+  "result_id": 45,
+  "result": {
+    "result_id": 45,
+    "task_id": 45,
+    "conversation_id": 33,
+    "problem_definition": "问题界定：用户提出「这次促销活动的效果为什么不如预期？」。该问题未命中系统预置的六大专有归因场景（商品目录质量 / 渠道投放效率 / 库存履约 / 用户口碑 / 退款售后 / 大盘下滑），因此系统走通用经营体检路径：先用大盘、渠道、品类三层结构定位异常区域，再给出进一步验证方向。",
+    "key_metrics": [
+      {
+        "metric_name": "GMV",
+        "metric_unit": "元",
+        "metric_value": "8,277,863.44",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "GMV 变化",
+        "metric_unit": "%",
+        "metric_value": "-25.86",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "订单量变化",
+        "metric_unit": "%",
+        "metric_value": "-25.5",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "退款金额变化",
+        "metric_unit": "%",
+        "metric_value": "31.1",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "最大渠道",
+        "metric_unit": "",
+        "metric_value": "内容-种草",
+        "metric_period": "按异常期 GMV"
+      },
+      {
+        "metric_name": "跌幅最大渠道",
+        "metric_unit": "",
+        "metric_value": "社媒-信息流",
+        "metric_period": "按异常期 GMV"
+      },
+      {
+        "metric_name": "最大品类",
+        "metric_unit": "",
+        "metric_value": "服饰鞋包",
+        "metric_period": "按异常期销售额"
+      },
+      {
+        "metric_name": "属性填充率最低品类",
+        "metric_unit": "",
+        "metric_value": "美妆个护",
+        "metric_period": "目录质量体检"
+      },
+      {
+        "metric_name": "该品类属性填充率",
+        "metric_unit": "%",
+        "metric_value": "36.3",
+        "metric_period": "目录质量体检"
+      }
+    ],
+    "evidence_list": [
+      {
+        "confidence": 0.94,
+        "source_name": "大盘经营概览（biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "base_gmv = 11165493.54；anomaly_gmv = 8277863.44；base_order_cnt = 22648.0；anomaly_order_cnt = 16873.0；base_refund = 490568.27；anomaly_refund = 643120.01",
+        "related_metric": "GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构",
+        "source_type": "database",
+        "evidence_text": "channel_name = 内容-种草；channel_type = content；base_gmv = 2134943.09；anomaly_gmv = 1926205.0",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品牌词；channel_type = search；base_gmv = 2590680.92；anomaly_gmv = 1917945.61",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品类词；channel_type = search；base_gmv = 1732543.58；anomaly_gmv = 1692884.55",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构",
+        "source_type": "database",
+        "evidence_text": "channel_name = 直访；channel_type = direct；base_gmv = 1023491.98；anomaly_gmv = 1088507.01",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构",
+        "source_type": "database",
+        "evidence_text": "channel_name = 联盟-CPS；channel_type = alliance；base_gmv = 1024500.32；anomaly_gmv = 923989.52",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构",
+        "source_type": "database",
+        "evidence_text": "channel_name = 社媒-信息流；channel_type = social；base_gmv = 2659333.65；anomaly_gmv = 728331.75",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构",
+        "source_type": "database",
+        "evidence_text": "category_name = 服饰鞋包；base_amount = 3975752.0；anomaly_amount = 3817195.0；anomaly_qty = 16805.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构",
+        "source_type": "database",
+        "evidence_text": "category_name = 家居日用；base_amount = 2870742.0；anomaly_amount = 2957109.0；anomaly_qty = 17501.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构",
+        "source_type": "database",
+        "evidence_text": "category_name = 数码配件；base_amount = 2463918.0；anomaly_amount = 2421755.0；anomaly_qty = 17595.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构",
+        "source_type": "database",
+        "evidence_text": "category_name = 美妆个护；base_amount = 2214157.0；anomaly_amount = 2131392.0；anomaly_qty = 16648.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构",
+        "source_type": "database",
+        "evidence_text": "category_name = 食品生鲜；base_amount = 1609502.2；anomaly_amount = 1749613.9；anomaly_qty = 16782.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检",
+        "source_type": "database",
+        "evidence_text": "category_name = 美妆个护；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill = 36.3",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检",
+        "source_type": "database",
+        "evidence_text": "category_name = 数码配件；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill = 85.6",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检",
+        "source_type": "database",
+        "evidence_text": "category_name = 家居日用；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill = 86.3",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检",
+        "source_type": "database",
+        "evidence_text": "category_name = 服饰鞋包；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill = 87.7",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检",
+        "source_type": "database",
+        "evidence_text": "category_name = 食品生鲜；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill = 88.4",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库/01_归因分析方法论.md",
+        "source_type": "knowledge",
+        "evidence_text": "# 经营归因分析方法论 ## 一、归因的四步法 1. **界定问题**：把模糊的业务抱怨转成可验证的量化命题。 - 反例：「最近转化不太好」 - 正例：「美妆个护品类曝光点击率在 9 月 16-30 日由 4.2% 降至 2.1%」 2. **拆解结构**：用乘法公式把结果指标拆成可控因子。 -",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库/02_电商核心指标口径.md",
+        "source_type": "knowledge",
+        "evidence_text": "# 电商核心指标口径定义 统一的指标口径是归因分析的前提。口径不一致时，两边的数字对比毫无意义。 ## 一、流量与转化 | 指标 | 口径 | 公式 | | --- | --- | --- | | 曝光量 | 商品卡在各类场景被展示的次数 | 直接累加 | | 点击量 | 商品卡被点击的次数 | 直接累加 | |",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库/05_用户口碑与退款诊断.md",
+        "source_type": "knowledge",
+        "evidence_text": "值 2 倍进入观察名单 4. **评论区关键词聚类**：每日对新出现的差评做标签聚类， 新标签出现即人工审阅 ## 六、常见误判 - **把退款率上升归因为「用户变挑剔」**：这是最危险的归因， 因为它导向「什么都不做」。正确做法是先看责任归属。 - **只处理退款不处理根因**：退款是症状，责任归属才是",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构（biz_channel + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 内容-种草；channel_type = content；base_gmv = 2134943.09；anomaly_gmv = 1926205.0",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构（biz_channel + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品牌词；channel_type = search；base_gmv = 2590680.92；anomaly_gmv = 1917945.61",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构（biz_channel + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品类词；channel_type = search；base_gmv = 1732543.58；anomaly_gmv = 1692884.55",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构（biz_channel + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 直访；channel_type = direct；base_gmv = 1023491.98；anomaly_gmv = 1088507.01",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "渠道结构（biz_channel + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 联盟-CPS；channel_type = alliance；base_gmv = 1024500.32；anomaly_gmv = 923989.52",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构（biz_sales + biz_category）",
+        "source_type": "database",
+        "evidence_text": "category_name = 服饰鞋包；base_amount = 3975752.0；anomaly_amount = 3817195.0；anomaly_qty = 16805.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构（biz_sales + biz_category）",
+        "source_type": "database",
+        "evidence_text": "category_name = 家居日用；base_amount = 2870742.0；anomaly_amount = 2957109.0；anomaly_qty = 17501.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构（biz_sales + biz_category）",
+        "source_type": "database",
+        "evidence_text": "category_name = 数码配件；base_amount = 2463918.0；anomaly_amount = 2421755.0；anomaly_qty = 17595.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构（biz_sales + biz_category）",
+        "source_type": "database",
+        "evidence_text": "category_name = 美妆个护；base_amount = 2214157.0；anomaly_amount = 2131392.0；anomaly_qty = 16648.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.92,
+        "source_name": "品类结构（biz_sales + biz_category）",
+        "source_type": "database",
+        "evidence_text": "category_name = 食品生鲜；base_amount = 1609502.2；anomaly_amount = 1749613.9；anomaly_qty = 16782.0",
+        "related_metric": "品类销售额"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 美妆个护；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill = 36.3",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 数码配件；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill = 85.6",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 家居日用；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill = 86.3",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 服饰鞋包；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill = 87.7",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "目录质量体检（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 食品生鲜；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill = 88.4",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库方法论检索",
+        "source_type": "database",
+        "evidence_text": "source_type = knowledge；source_name = 知识库/01_归因分析方法论.md；snippet = # 经营归因分析方法论 ## 一、归因的四步法 1. **界定问题**：把模糊的业务抱怨转成可验证的量化命题。 - 反例：「最近转化不太好」 - 正例：「美妆个护品类曝光点击率在 9 月 16-30 日由 4.2% 降至 2.1%」 2. **拆解结构**：用乘法公式把结果指标拆成可控因子。 -",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库方法论检索",
+        "source_type": "database",
+        "evidence_text": "source_type = knowledge；source_name = 知识库/02_电商核心指标口径.md；snippet = # 电商核心指标口径定义 统一的指标口径是归因分析的前提。口径不一致时，两边的数字对比毫无意义。 ## 一、流量与转化 | 指标 | 口径 | 公式 | | --- | --- | --- | | 曝光量 | 商品卡在各类场景被展示的次数 | 直接累加 | | 点击量 | 商品卡被点击的次数 | 直接累加 | |",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库方法论检索",
+        "source_type": "database",
+        "evidence_text": "source_type = knowledge；source_name = 知识库/05_用户口碑与退款诊断.md；snippet = 值 2 倍进入观察名单 4. **评论区关键词聚类**：每日对新出现的差评做标签聚类， 新标签出现即人工审阅 ## 六、常见误判 - **把退款率上升归因为「用户变挑剔」**：这是最危险的归因， 因为它导向「什么都不做」。正确做法是先看责任归属。 - **只处理退款不处理根因**：退款是症状，责任归属才是",
+        "related_metric": "分析方法论"
+      }
+    ],
+    "conclusion_text": "结论：本轮走通用体检路径，得出的是**结构性观察**而非确定性归因。\n\n- 大盘：GMV 由 11,165,493.54 元变为 8,277,863.44 元（-25.86%），订单量变化 -25.50%，退款金额变化 +31.10%；\n- 渠道：GMV 最高的是「内容-种草」，最低的是「社媒-信息流」，渠道间差距明显，建议优先复核低贡献渠道的投放与承接效率；\n- 品类：销售额最高的是「服饰鞋包」，目录质量最弱的是「美妆个护」（属性填充率仅 36.3%），该品类存在「有货但卖不动」的典型特征。\n\n未能给出确定性归因的原因：本轮问题未匹配到预置场景的知识规则，系统只做了结构性扫描，没有执行场景化的深度下钻（如漏斗拆解、责任归属判定）。",
+    "missing_data_text": "要把结论升级为确定性归因，还需要补充：\n- 更明确的问题边界（具体指标、时间范围、影响对象），以便路由到专有场景做深度下钻\n- 对应的业务明细数据（如订单明细、流量来源明细、操作日志）\n- 若有相关报表或截图，可通过附件上传，系统会纳入证据链一起分析",
+    "next_action_text": "- **建议 1**：把问题改写得更具体，例如「美妆个护品类 9 月下旬点击率为什么从 4.2% 掉到 2.1%」，系统会自动路由到专有场景并给出确定性归因；\n- **建议 2**：先针对上方「最低贡献渠道」与「目录质量最弱品类」做一次专项排查；\n- **建议 3**：上传相关明细文件（CSV/Excel）后再次提问，可显著提升归因精度；\n- **建议 4**：若属于新业务场景，可把该问题沉淀为新的场景规则，后续同类问题即可自动完成完整归因。",
+    "result_markdown": "# 经营归因分析报告\n\n- 任务编号：#45\n- 分析问题：这次促销活动的效果为什么不如预期？\n- 完成时间：2026-10-08T19:31:00\n\n## 一、问题定义\n\n问题界定：用户提出「这次促销活动的效果为什么不如预期？」。该问题未命中系统预置的六大专有归因场景（商品目录质量 / 渠道投放效率 / 库存履约 / 用户口碑 / 退款售后 / 大盘下滑），因此系统走通用经营体检路径：先用大盘、渠道、品类三层结构定位异常区域，再给出进一步验证方向。\n\n## 二、关键指标\n\n| 指标名称 | 指标值 | 单位 | 统计口径/周期 |\n| --- | --- | --- | --- |\n| GMV | 8,277,863.44 | 元 | 异常期 2026-09-16 ~ 2026-09-30 |\n| GMV 变化 | -25.86 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30 |\n| 订单量变化 | -25.5 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30 |\n| 退款金额变化 | 31.1 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30 |\n| 最大渠道 | 内容-种草 |  | 按异常期 GMV |\n| 跌幅最大渠道 | 社媒-信息流 |  | 按异常期 GMV |\n| 最大品类 | 服饰鞋包 |  | 按异常期销售额 |\n| 属性填充率最低品类 | 美妆个护 |  | 目录质量体检 |\n| 该品类属性填充率 | 36.3 | % | 目录质量体检 |\n\n## 三、证据链\n\n### 证据 1｜大盘经营概览（biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：GMV\n- 置信度：94%\n- 证据内容：base_gmv = 11165493.54；anomaly_gmv = 8277863.44；base_order_cnt = 22648.0；anomaly_order_cnt = 16873.0；base_refund = 490568.27；anomaly_refund = 643120.01\n\n### 证据 2｜渠道结构\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 内容-种草；channel_type = content；base_gmv = 2134943.09；anomaly_gmv = 1926205.0\n\n### 证据 3｜渠道结构\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 搜索-品牌词；channel_type = search；base_gmv = 2590680.92；anomaly_gmv = 1917945.61\n\n### 证据 4｜渠道结构\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 搜索-品类词；channel_type = search；base_gmv = 1732543.58；anomaly_gmv = 1692884.55\n\n### 证据 5｜渠道结构\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 直访；channel_type = direct；base_gmv = 1023491.98；anomaly_gmv = 1088507.01\n\n### 证据 6｜渠道结构\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 联盟-CPS；channel_type = alliance；base_gmv = 1024500.32；anomaly_gmv = 923989.52\n\n### 证据 7｜渠道结构\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 社媒-信息流；channel_type = social；base_gmv = 2659333.65；anomaly_gmv = 728331.75\n\n### 证据 8｜品类结构\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 服饰鞋包；base_amount = 3975752.0；anomaly_amount = 3817195.0；anomaly_qty = 16805.0\n\n### 证据 9｜品类结构\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 家居日用；base_amount = 2870742.0；anomaly_amount = 2957109.0；anomaly_qty = 17501.0\n\n### 证据 10｜品类结构\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 数码配件；base_amount = 2463918.0；anomaly_amount = 2421755.0；anomaly_qty = 17595.0\n\n### 证据 11｜品类结构\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 美妆个护；base_amount = 2214157.0；anomaly_amount = 2131392.0；anomaly_qty = 16648.0\n\n### 证据 12｜品类结构\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 食品生鲜；base_amount = 1609502.2；anomaly_amount = 1749613.9；anomaly_qty = 16782.0\n\n### 证据 13｜目录质量体检\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 美妆个护；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill = 36.3\n\n### 证据 14｜目录质量体检\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 数码配件；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill = 85.6\n\n### 证据 15｜目录质量体检\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 家居日用；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill = 86.3\n\n### 证据 16｜目录质量体检\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 服饰鞋包；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill = 87.7\n\n### 证据 17｜目录质量体检\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 食品生鲜；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill = 88.4\n\n### 证据 18｜知识库/01_归因分析方法论.md\n\n- 来源类型：knowledge\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：# 经营归因分析方法论 ## 一、归因的四步法 1. **界定问题**：把模糊的业务抱怨转成可验证的量化命题。 - 反例：「最近转化不太好」 - 正例：「美妆个护品类曝光点击率在 9 月 16-30 日由 4.2% 降至 2.1%」 2. **拆解结构**：用乘法公式把结果指标拆成可控因子。 -\n\n### 证据 19｜知识库/02_电商核心指标口径.md\n\n- 来源类型：knowledge\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：# 电商核心指标口径定义 统一的指标口径是归因分析的前提。口径不一致时，两边的数字对比毫无意义。 ## 一、流量与转化 | 指标 | 口径 | 公式 | | --- | --- | --- | | 曝光量 | 商品卡在各类场景被展示的次数 | 直接累加 | | 点击量 | 商品卡被点击的次数 | 直接累加 | |\n\n### 证据 20｜知识库/05_用户口碑与退款诊断.md\n\n- 来源类型：knowledge\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：值 2 倍进入观察名单 4. **评论区关键词聚类**：每日对新出现的差评做标签聚类， 新标签出现即人工审阅 ## 六、常见误判 - **把退款率上升归因为「用户变挑剔」**：这是最危险的归因， 因为它导向「什么都不做」。正确做法是先看责任归属。 - **只处理退款不处理根因**：退款是症状，责任归属才是\n\n### 证据 21｜渠道结构（biz_channel + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 内容-种草；channel_type = content；base_gmv = 2134943.09；anomaly_gmv = 1926205.0\n\n### 证据 22｜渠道结构（biz_channel + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 搜索-品牌词；channel_type = search；base_gmv = 2590680.92；anomaly_gmv = 1917945.61\n\n### 证据 23｜渠道结构（biz_channel + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 搜索-品类词；channel_type = search；base_gmv = 1732543.58；anomaly_gmv = 1692884.55\n\n### 证据 24｜渠道结构（biz_channel + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 直访；channel_type = direct；base_gmv = 1023491.98；anomaly_gmv = 1088507.01\n\n### 证据 25｜渠道结构（biz_channel + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：92%\n- 证据内容：channel_name = 联盟-CPS；channel_type = alliance；base_gmv = 1024500.32；anomaly_gmv = 923989.52\n\n### 证据 26｜品类结构（biz_sales + biz_category）\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 服饰鞋包；base_amount = 3975752.0；anomaly_amount = 3817195.0；anomaly_qty = 16805.0\n\n### 证据 27｜品类结构（biz_sales + biz_category）\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 家居日用；base_amount = 2870742.0；anomaly_amount = 2957109.0；anomaly_qty = 17501.0\n\n### 证据 28｜品类结构（biz_sales + biz_category）\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 数码配件；base_amount = 2463918.0；anomaly_amount = 2421755.0；anomaly_qty = 17595.0\n\n### 证据 29｜品类结构（biz_sales + biz_category）\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 美妆个护；base_amount = 2214157.0；anomaly_amount = 2131392.0；anomaly_qty = 16648.0\n\n### 证据 30｜品类结构（biz_sales + biz_category）\n\n- 来源类型：database\n- 关联指标：品类销售额\n- 置信度：92%\n- 证据内容：category_name = 食品生鲜；base_amount = 1609502.2；anomaly_amount = 1749613.9；anomaly_qty = 16782.0\n\n### 证据 31｜目录质量体检（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 美妆个护；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill = 36.3\n\n### 证据 32｜目录质量体检（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 数码配件；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill = 85.6\n\n### 证据 33｜目录质量体检（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 家居日用；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill = 86.3\n\n### 证据 34｜目录质量体检（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 服饰鞋包；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill = 87.7\n\n### 证据 35｜目录质量体检（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：88%\n- 证据内容：category_name = 食品生鲜；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill = 88.4\n\n### 证据 36｜知识库方法论检索\n\n- 来源类型：database\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：source_type = knowledge；source_name = 知识库/01_归因分析方法论.md；snippet = # 经营归因分析方法论 ## 一、归因的四步法 1. **界定问题**：把模糊的业务抱怨转成可验证的量化命题。 - 反例：「最近转化不太好」 - 正例：「美妆个护品类曝光点击率在 9 月 16-30 日由 4.2% 降至 2.1%」 2. **拆解结构**：用乘法公式把结果指标拆成可控因子。 -\n\n### 证据 37｜知识库方法论检索\n\n- 来源类型：database\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：source_type = knowledge；source_name = 知识库/02_电商核心指标口径.md；snippet = # 电商核心指标口径定义 统一的指标口径是归因分析的前提。口径不一致时，两边的数字对比毫无意义。 ## 一、流量与转化 | 指标 | 口径 | 公式 | | --- | --- | --- | | 曝光量 | 商品卡在各类场景被展示的次数 | 直接累加 | | 点击量 | 商品卡被点击的次数 | 直接累加 | |\n\n### 证据 38｜知识库方法论检索\n\n- 来源类型：database\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：source_type = knowledge；source_name = 知识库/05_用户口碑与退款诊断.md；snippet = 值 2 倍进入观察名单 4. **评论区关键词聚类**：每日对新出现的差评做标签聚类， 新标签出现即人工审阅 ## 六、常见误判 - **把退款率上升归因为「用户变挑剔」**：这是最危险的归因， 因为它导向「什么都不做」。正确做法是先看责任归属。 - **只处理退款不处理根因**：退款是症状，责任归属才是\n\n## 四、结论\n\n结论：本轮走通用体检路径，得出的是**结构性观察**而非确定性归因。\n\n- 大盘：GMV 由 11,165,493.54 元变为 8,277,863.44 元（-25.86%），订单量变化 -25.50%，退款金额变化 +31.10%；\n- 渠道：GMV 最高的是「内容-种草」，最低的是「社媒-信息流」，渠道间差距明显，建议优先复核低贡献渠道的投放与承接效率；\n- 品类：销售额最高的是「服饰鞋包」，目录质量最弱的是「美妆个护」（属性填充率仅 36.3%），该品类存在「有货但卖不动」的典型特征。\n\n未能给出确定性归因的原因：本轮问题未匹配到预置场景的知识规则，系统只做了结构性扫描，没有执行场景化的深度下钻（如漏斗拆解、责任归属判定）。\n\n## 五、数据缺口\n\n要把结论升级为确定性归因，还需要补充：\n- 更明确的问题边界（具体指标、时间范围、影响对象），以便路由到专有场景做深度下钻\n- 对应的业务明细数据（如订单明细、流量来源明细、操作日志）\n- 若有相关报表或截图，可通过附件上传，系统会纳入证据链一起分析\n\n## 六、下一步行动建议\n\n- **建议 1**：把问题改写得更具体，例如「美妆个护品类 9 月下旬点击率为什么从 4.2% 掉到 2.1%」，系统会自动路由到专有场景并给出确定性归因；\n- **建议 2**：先针对上方「最低贡献渠道」与「目录质量最弱品类」做一次专项排查；\n- **建议 3**：上传相关明细文件（CSV/Excel）后再次提问，可显著提升归因精度；\n- **建议 4**：若属于新业务场景，可把该问题沉淀为新的场景规则，后续同类问题即可自动完成完整归因。\n\n---\n\n*本报告由经营多轮归因分析系统自动生成，结论均可回溯至上方证据链。*",
+    "result_file_path": "exports/2/33/分析报告_任务45_20261008_193100.md",
+    "download_url": "http://localhost:8000/api/results/download?result_id=45&format=markdown",
+    "created_at": "2026-10-08T19:31:00"
+  },
+  "module_sizes": {
+    "problem_definition_chars": 140,
+    "key_metrics_count": 9,
+    "evidence_list_count": 38,
+    "conclusion_text_chars": 320,
+    "missing_data_text_chars": 125,
+    "next_action_text_chars": 223,
+    "result_markdown_chars": 8421
+  },
+  "exports": {
+    "md": {
+      "status_code": 200,
+      "bytes": 14715,
+      "content_type": "text/markdown; charset=utf-8",
+      "magic": "2320e7bb"
+    },
+    "json": {
+      "status_code": 200,
+      "bytes": 17596,
+      "content_type": "application/json; charset=utf-8",
+      "magic": "7b0d0a20"
+    },
+    "xlsx": {
+      "status_code": 200,
+      "bytes": 11023,
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "magic": "504b0304"
+    }
+  },
+  "route": {
+    "route_log_line": "场景路由|generic|通用经营体检|turn=2",
+    "scenario_key": "generic",
+    "scenario_name": "通用经营体检",
+    "route_score_log": "场景路由得分：[{'key': 'catalog', 'name': '商品目录质量归因', 'score': 0}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=是",
+    "lifecycle_logs": [
+      "任务完成：场景「通用经营体检」，指标 9 项，证据 38 条，耗时 317ms",
+      "场景路由|generic|通用经营体检|turn=2",
+      "任务开始执行",
+      "收到提问：这次促销活动的效果为什么不如预期？"
+    ]
+  },
+  "sent_at": "2026-10-08T19:31:00",
+  "collected_at": "2026-10-08T19:31:00"
+}

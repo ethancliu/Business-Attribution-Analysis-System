@@ -1,0 +1,454 @@
+{
+  "input_text": "信息流渠道 ROAS 从 5.9 掉到 1.6，投放预算没变，问题出在哪？",
+  "conversation_id": 29,
+  "task_id": 41,
+  "task_status": "success",
+  "error_message": null,
+  "duration_ms": 406,
+  "poll_seconds": 0.52,
+  "tool_call_count": 6,
+  "tool_calls": [
+    {
+      "seq": 1,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT ch.channel_name,\n                   ch.channel_type,\n                   ROUND(SUM(CASE WHEN d.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN d.spend ELSE 0 END), 2)\n                       AS base_spend,\n                   ROUND(SUM(CASE WHEN d.stat_date BETWEEN '2026-09-16'…",
+        "limit": 30
+      },
+      "status": "success",
+      "summary": "返回 6 行数据，字段 channel_name, channel_type, base_spend, anomaly_spend, base_roas, anomaly_roas。示例：channel_name=社媒-信息流；channel_type=social；base_spend=449060.75；anomaly_spend=461314.63；base_roas=5.92；anomaly_roas=1.58",
+      "duration_ms": 5,
+      "started_at": "2026-10-08T19:30:57.820342",
+      "finished_at": "2026-10-08T19:30:57.820342",
+      "step_key": "roas_by_channel",
+      "step_title": "按渠道对比 ROAS 与投放花费（基准期 vs 异常期）"
+    },
+    {
+      "seq": 2,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT ch.channel_name,\n                   ROUND(100 * SUM(CASE WHEN d.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN d.click ELSE 0 END)\n                         / NULLIF(SUM(CASE WHEN d.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN d.impression ELSE 0 END), 0), 3)\n       …",
+        "limit": 30
+      },
+      "status": "success",
+      "summary": "返回 6 行数据，字段 channel_name, base_ctr_pct, anomaly_ctr_pct, base_cpc, anomaly_cpc, base_cac。示例：channel_name=社媒-信息流；base_ctr_pct=1.607；anomaly_ctr_pct=0.861；base_cpc=1.55；anomaly_cpc=3.01；base_cac=28.24",
+      "duration_ms": 4,
+      "started_at": "2026-10-08T19:30:57.840412",
+      "finished_at": "2026-10-08T19:30:57.840412",
+      "step_key": "traffic_efficiency",
+      "step_title": "拆解各渠道点击率、CPC 与单客获取成本"
+    },
+    {
+      "seq": 3,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT ch.channel_name,\n                   SUM(CASE WHEN s.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN s.order_cnt ELSE 0 END) AS base_order_cnt,\n                   SUM(CASE WHEN s.stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN s.order_cnt ELSE 0 END) AS anomaly_order_cnt…",
+        "limit": 30
+      },
+      "status": "success",
+      "summary": "返回 6 行数据，字段 channel_name, base_order_cnt, anomaly_order_cnt, base_gmv, anomaly_gmv, anomaly_refund_amount。示例：channel_name=社媒-信息流；base_order_cnt=5391.0；anomaly_order_cnt=1501.0；base_gmv=2659333.65；anomaly_gmv=728331.75；anomaly_refund_amount=58268.17",
+      "duration_ms": 2,
+      "started_at": "2026-10-08T19:30:57.856461",
+      "finished_at": "2026-10-08T19:30:57.856461",
+      "step_key": "deal_quality",
+      "step_title": "核对各渠道成交规模与退款金额"
+    },
+    {
+      "seq": 4,
+      "tool_name": "text_search",
+      "tool_args": {
+        "keyword": "ROAS",
+        "scope": "knowledge",
+        "limit": 5
+      },
+      "status": "success",
+      "summary": "关键词「ROAS」命中 3 处（knowledge 3 条）。首条来自 知识库/01_归因分析方法论.md：成可控因子。 - GMV = 流量 × 转化率 × 客单价 - 曝光转化链：曝光 → 点击（CTR）→ 加购 → 下单（CVR）→ 支付 - ROAS = 渠道",
+      "duration_ms": 2,
+      "started_at": "2026-10-08T19:30:57.872526",
+      "finished_at": "2026-10-08T19:30:57.872526",
+      "step_key": "method_knowledge",
+      "step_title": "检索知识库中关于 ROAS 诊断的分析口径"
+    },
+    {
+      "seq": 5,
+      "tool_name": "file_write",
+      "tool_args": {
+        "file_name": "分渠道ROAS对比.csv",
+        "content": [
+          {
+            "channel_name": "社媒-信息流",
+            "channel_type": "social",
+            "base_spend": 449060.75,
+            "anomaly_spend": 461314.63,
+            "base_roas": 5.92,
+            "anomaly_roas": 1.58
+          },
+          {
+            "channel_name": "内容-种草",
+            "channel_type": "content",
+            "base_spend": 271985.94,
+            "anomaly_spend": 284646.67,
+            "base_roas": 7.85,
+            "anomaly_roas": 6.77
+          },
+          {
+            "channel_name": "搜索-品类词",
+            "channel_type": "search",
+            "base_spend": 168237.04,
+            "anomaly_spend": 175937.93,
+            "base_roas": 10.3,
+            "anomaly_roas": 9.62
+          },
+          {
+            "channel_name": "搜索-品牌词",
+            "channel_type": "search",
+            "base_spend": 184857.82,
+            "anomaly_spend": 175039.89,
+            "base_roas": 14.01,
+            "anomaly_roas": 10.96
+          },
+          {
+            "channel_name": "联盟-CPS",
+            "channel_type": "alliance",
+            "base_spend": 70632.96,
+            "anomaly_spend": 67654.44,
+            "base_roas": 14.5,
+            "anomaly_roas": 13.66
+          },
+          {
+            "channel_name": "直访",
+            "channel_type": "direct",
+            "base_spend": 12253.08,
+            "anomaly_spend": 10316.68,
+            "base_roas": 83.53,
+            "anomaly_roas": 105.51
+          }
+        ],
+        "format": "table"
+      },
+      "status": "success",
+      "summary": "已写出中间产物 分渠道ROAS对比_20261008_193057.csv（322 B）到工作区",
+      "duration_ms": 6,
+      "started_at": "2026-10-08T19:30:57.892913",
+      "finished_at": "2026-10-08T19:30:57.892913",
+      "step_key": "artifact",
+      "step_title": "把分渠道 ROAS 对比写出到会话工作区"
+    },
+    {
+      "seq": 6,
+      "tool_name": "result_generate",
+      "tool_args": {
+        "scene": "market",
+        "metrics": 13,
+        "evidence": 23
+      },
+      "status": "success",
+      "summary": "已生成标准报告：关键指标 13 项、证据 23 条、结论 493 字",
+      "duration_ms": 0,
+      "started_at": "2026-10-08T19:30:57.922080",
+      "finished_at": "2026-10-08T19:30:57.922080",
+      "step_key": "result_generate",
+      "step_title": "生成标准化分析报告"
+    }
+  ],
+  "result_id": 41,
+  "result": {
+    "result_id": 41,
+    "task_id": 41,
+    "conversation_id": 29,
+    "problem_definition": "针对「信息流渠道 ROAS 从 5.9 掉到 1.6，投放预算没变，问题出在哪？」，先把问题界定为可验证的量化问题：\n渠道「社媒-信息流」的投放回报率 ROAS 在异常期（2026-09-16 ~ 2026-09-30）由 5.92 下滑至 1.58（相对变化 -73.31%），而同期投放花费仅变化 2.73%（44.91 万元 → 46.13 万元）。因此问题不是「预算被砍」，而是「同样的钱买不到同样的成交」。",
+    "key_metrics": [
+      {
+        "metric_name": "社媒-信息流 ROAS",
+        "metric_unit": "倍",
+        "metric_value": "1.58",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "社媒-信息流 ROAS（基准）",
+        "metric_unit": "倍",
+        "metric_value": "5.92",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15"
+      },
+      {
+        "metric_name": "ROAS 相对变化",
+        "metric_unit": "%",
+        "metric_value": "-73.31",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "投放花费变化",
+        "metric_unit": "%",
+        "metric_value": "2.73",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "异常期投放花费",
+        "metric_unit": "元",
+        "metric_value": "461,314.63",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "渠道点击率",
+        "metric_unit": "%",
+        "metric_value": "0.86",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "渠道点击率（基准）",
+        "metric_unit": "%",
+        "metric_value": "1.61",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15"
+      },
+      {
+        "metric_name": "单次点击成本 CPC",
+        "metric_unit": "元",
+        "metric_value": "3.01",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "单次点击成本 CPC（基准）",
+        "metric_unit": "元",
+        "metric_value": "1.55",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15"
+      },
+      {
+        "metric_name": "新客获取成本 CAC",
+        "metric_unit": "元",
+        "metric_value": "191.42",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "新客获取成本 CAC（基准）",
+        "metric_unit": "元",
+        "metric_value": "28.24",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15"
+      },
+      {
+        "metric_name": "渠道 GMV",
+        "metric_unit": "元",
+        "metric_value": "728,331.75",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "其他渠道 ROAS 区间",
+        "metric_unit": "倍",
+        "metric_value": "6.77~105.51",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      }
+    ],
+    "evidence_list": [
+      {
+        "confidence": 0.96,
+        "source_name": "分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 社媒-信息流；channel_type = social；base_spend = 449060.75；anomaly_spend = 461314.63；base_roas = 5.92；anomaly_roas = 1.58",
+        "related_metric": "渠道 ROAS"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 内容-种草；channel_type = content；base_spend = 271985.94；anomaly_spend = 284646.67；base_roas = 7.85；anomaly_roas = 6.77",
+        "related_metric": "渠道 ROAS"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品类词；channel_type = search；base_spend = 168237.04；anomaly_spend = 175937.93；base_roas = 10.3；anomaly_roas = 9.62",
+        "related_metric": "渠道 ROAS"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品牌词；channel_type = search；base_spend = 184857.82；anomaly_spend = 175039.89；base_roas = 14.01；anomaly_roas = 10.96",
+        "related_metric": "渠道 ROAS"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 联盟-CPS；channel_type = alliance；base_spend = 70632.96；anomaly_spend = 67654.44；base_roas = 14.5；anomaly_roas = 13.66",
+        "related_metric": "渠道 ROAS"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 直访；channel_type = direct；base_spend = 12253.08；anomaly_spend = 10316.68；base_roas = 83.53；anomaly_roas = 105.51",
+        "related_metric": "渠道 ROAS"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "渠道流量效率指标（biz_ad_delivery）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 社媒-信息流；base_ctr_pct = 1.607；anomaly_ctr_pct = 0.861；base_cpc = 1.55；anomaly_cpc = 3.01；base_cac = 28.24；anomaly_cac = 191.42",
+        "related_metric": "点击率 / CPC / CAC"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "渠道流量效率指标（biz_ad_delivery）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 内容-种草；base_ctr_pct = 2.726；anomaly_ctr_pct = 2.539；base_cpc = 1.84；anomaly_cpc = 2.12；base_cac = 47.83；anomaly_cac = 56.93",
+        "related_metric": "点击率 / CPC / CAC"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "渠道流量效率指标（biz_ad_delivery）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品类词；base_ctr_pct = 3.414；anomaly_ctr_pct = 3.486；base_cpc = 1.45；anomaly_cpc = 1.54；base_cac = 36.31；anomaly_cac = 43.96",
+        "related_metric": "点击率 / CPC / CAC"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "渠道流量效率指标（biz_ad_delivery）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品牌词；base_ctr_pct = 3.472；anomaly_ctr_pct = 3.375；base_cpc = 1.63；anomaly_cpc = 1.55；base_cac = 43.2；anomaly_cac = 43.61",
+        "related_metric": "点击率 / CPC / CAC"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "渠道流量效率指标（biz_ad_delivery）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 联盟-CPS；base_ctr_pct = 4.01；anomaly_ctr_pct = 3.742；base_cpc = 1.02；anomaly_cpc = 1.05；base_cac = 25.68；anomaly_cac = 29.75",
+        "related_metric": "点击率 / CPC / CAC"
+      },
+      {
+        "confidence": 0.9,
+        "source_name": "渠道成交与退款（biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 社媒-信息流；base_order_cnt = 5391.0；anomaly_order_cnt = 1501.0；base_gmv = 2659333.65；anomaly_gmv = 728331.75；anomaly_refund_amount = 58268.17",
+        "related_metric": "渠道 GMV / 退款额"
+      },
+      {
+        "confidence": 0.9,
+        "source_name": "渠道成交与退款（biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 联盟-CPS；base_order_cnt = 2084.0；anomaly_order_cnt = 1868.0；base_gmv = 1024500.32；anomaly_gmv = 923989.52；anomaly_refund_amount = 63502.78",
+        "related_metric": "渠道 GMV / 退款额"
+      },
+      {
+        "confidence": 0.9,
+        "source_name": "渠道成交与退款（biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 直访；base_order_cnt = 2069.0；anomaly_order_cnt = 2188.0；base_gmv = 1023491.98；anomaly_gmv = 1088507.01；anomaly_refund_amount = 85831.72",
+        "related_metric": "渠道 GMV / 退款额"
+      },
+      {
+        "confidence": 0.9,
+        "source_name": "渠道成交与退款（biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品类词；base_order_cnt = 3520.0；anomaly_order_cnt = 3432.0；base_gmv = 1732543.58；anomaly_gmv = 1692884.55；anomaly_refund_amount = 133262.01",
+        "related_metric": "渠道 GMV / 退款额"
+      },
+      {
+        "confidence": 0.9,
+        "source_name": "渠道成交与退款（biz_sales_summary）",
+        "source_type": "database",
+        "evidence_text": "channel_name = 搜索-品牌词；base_order_cnt = 5237.0；anomaly_order_cnt = 3940.0；base_gmv = 2590680.92；anomaly_gmv = 1917945.61；anomaly_refund_amount = 142993.44",
+        "related_metric": "渠道 GMV / 退款额"
+      },
+      {
+        "confidence": 0.95,
+        "source_name": "渠道 ROAS 变化结论",
+        "source_type": "database",
+        "evidence_text": "花费 44.91 万元 → 46.13 万元（+2.73%），GMV 265.93 万元 → 72.83 万元（-72.61%），ROAS 5.92 → 1.58（-73.31%）。花费基本持平而 GMV 大幅下降，说明问题出在流量质量与转化效率，不是预算规模。",
+        "related_metric": "渠道 GMV"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库/01_归因分析方法论.md",
+        "source_type": "knowledge",
+        "evidence_text": "成可控因子。 - GMV = 流量 × 转化率 × 客单价 - 曝光转化链：曝光 → 点击（CTR）→ 加购 → 下单（CVR）→ 支付 - ROAS = 渠道 GMV ÷ 渠道投放花费 3. **定位异常**：对每个因子做「基准期 vs 异常期」对比，找出变化最大的那一层。 归因的关键是**对",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库/02_电商核心指标口径.md",
+        "source_type": "knowledge",
+        "evidence_text": "V | GMV ÷ 订单数 | 反映「货品结构」 | ## 二、投放效率 | 指标 | 公式 | 健康参考 | | --- | --- | --- | | ROAS | 渠道成交额 ÷ 渠道花费 | 美妆类目 ≥ 3.0 | | CPC | 花费 ÷ 点击量 | 越低越好，但需结合质量 | | CPM | 花费 ÷",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库/05_用户口碑与退款诊断.md",
+        "source_type": "knowledge",
+        "evidence_text": "、退款率上升的连带影响 退款不只是损失一笔收入，它会连锁触发： 1. 店铺权重下降（平台算法惩罚退款率高的店铺） 2. 自然流量减少 → 流量成本上升 → ROAS 恶化 3. 库存二次损失（退货商品可能需要折价处理） 4. 售后人力成本上升 → 平均处理时长增加 → 二次投诉 因此退款率是**不能拖的指标**，",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库方法论检索",
+        "source_type": "database",
+        "evidence_text": "source_type = knowledge；source_name = 知识库/01_归因分析方法论.md；snippet = 成可控因子。 - GMV = 流量 × 转化率 × 客单价 - 曝光转化链：曝光 → 点击（CTR）→ 加购 → 下单（CVR）→ 支付 - ROAS = 渠道 GMV ÷ 渠道投放花费 3. **定位异常**：对每个因子做「基准期 vs 异常期」对比，找出变化最大的那一层。 归因的关键是**对",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库方法论检索",
+        "source_type": "database",
+        "evidence_text": "source_type = knowledge；source_name = 知识库/02_电商核心指标口径.md；snippet = V | GMV ÷ 订单数 | 反映「货品结构」 | ## 二、投放效率 | 指标 | 公式 | 健康参考 | | --- | --- | --- | | ROAS | 渠道成交额 ÷ 渠道花费 | 美妆类目 ≥ 3.0 | | CPC | 花费 ÷ 点击量 | 越低越好，但需结合质量 | | CPM | 花费 ÷",
+        "related_metric": "分析方法论"
+      },
+      {
+        "confidence": 0.8,
+        "source_name": "知识库方法论检索",
+        "source_type": "database",
+        "evidence_text": "source_type = knowledge；source_name = 知识库/05_用户口碑与退款诊断.md；snippet = 、退款率上升的连带影响 退款不只是损失一笔收入，它会连锁触发： 1. 店铺权重下降（平台算法惩罚退款率高的店铺） 2. 自然流量减少 → 流量成本上升 → ROAS 恶化 3. 库存二次损失（退货商品可能需要折价处理） 4. 售后人力成本上升 → 平均处理时长增加 → 二次投诉 因此退款率是**不能拖的指标**，",
+        "related_metric": "分析方法论"
+      }
+    ],
+    "conclusion_text": "归因结论：渠道「社媒-信息流」的投放效率恶化是**流量质量与素材效率问题**，不是预算问题。花费仅变化 +2.73%，但 ROAS 从 5.92 跌到 1.58（-73.31%）；同期其他渠道 ROAS 仍在 6.77~105.51 的正常区间，说明平台整体流量没有系统性贬值，问题集中在单一渠道的投放执行。\n\n具体证据支持以下判断：\n\n- 点击率下滑：1.607% → 0.861%（-46.42%），素材吸引力下降或人群定向漂移\n- 点击成本上升：CPC 1.55 元 → 3.01 元（+94.19%），竞价环境或定向竞争加剧\n- 获客成本上升：CAC 28.24 元 → 191.42 元（+577.83%），新客质量下降明显\n- 成交规模下滑：GMV 265.93 万元 → 72.83 万元（-72.61%）\n\n因果链条：素材老化 / 定向漂移 → 点击率 1.607% 降至 0.861%、CPC 升至 3.01 元 → 单客获取成本由 28.24 元升至 191.42 元 → 同样花费换来的 GMV 由 265.93 万元 降至 72.83 万元 → ROAS 崩塌。",
+    "missing_data_text": "以下数据缺口会限制结论的精度：\n- 缺少分广告计划的素材维度数据（素材上线时间、素材版本、投放人群包），无法定位到具体素材\n- 缺少竞品同期投放强度数据，无法量化竞价环境变化的影响权重\n- 缺少「社媒-信息流」渠道的落地页转化率埋点，无法区分「点击进来了不买」与「根本没点进来」",
+    "next_action_text": "- **紧急（24 小时内）**：暂停「社媒-信息流」中 CPA 高于 191 元且近 7 日无转化的广告计划，先止住无效消耗（按当前效率测算，可减少约 15% 的浪费花费）；\n- **3 天内**：对该渠道做素材疲劳度排查，替换点击率低于渠道均值 70% 的素材，并重启 2~3 组历史高点击素材做 A/B 对照；\n- **3 天内**：复核定向人群包，比对基准期的高价值人群与当前投放人群的重合度，重合度低于 60% 需重建人群包；\n- **一周内**：为该渠道设置 ROAS 熔断线（低于 2.96 自动降预算 30% 并告警），避免再次出现「花了半个月才发现 ROI 已经腰斩」；\n- **持续**：把 ROAS、CPC、CAC 三项指标纳入渠道日报，与 GMV 同屏监控。",
+    "result_markdown": "# 经营归因分析报告\n\n- 任务编号：#41\n- 分析问题：信息流渠道 ROAS 从 5.9 掉到 1.6，投放预算没变，问题出在哪？\n- 完成时间：2026-10-08T19:30:57\n\n## 一、问题定义\n\n针对「信息流渠道 ROAS 从 5.9 掉到 1.6，投放预算没变，问题出在哪？」，先把问题界定为可验证的量化问题：\n渠道「社媒-信息流」的投放回报率 ROAS 在异常期（2026-09-16 ~ 2026-09-30）由 5.92 下滑至 1.58（相对变化 -73.31%），而同期投放花费仅变化 2.73%（44.91 万元 → 46.13 万元）。因此问题不是「预算被砍」，而是「同样的钱买不到同样的成交」。\n\n## 二、关键指标\n\n| 指标名称 | 指标值 | 单位 | 统计口径/周期 |\n| --- | --- | --- | --- |\n| 社媒-信息流 ROAS | 1.58 | 倍 | 异常期 2026-09-16 ~ 2026-09-30 |\n| 社媒-信息流 ROAS（基准） | 5.92 | 倍 | 基准期 2026-09-01 ~ 2026-09-15 |\n| ROAS 相对变化 | -73.31 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30 |\n| 投放花费变化 | 2.73 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30 |\n| 异常期投放花费 | 461,314.63 | 元 | 异常期 2026-09-16 ~ 2026-09-30 |\n| 渠道点击率 | 0.86 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30 |\n| 渠道点击率（基准） | 1.61 | % | 基准期 2026-09-01 ~ 2026-09-15 |\n| 单次点击成本 CPC | 3.01 | 元 | 异常期 2026-09-16 ~ 2026-09-30 |\n| 单次点击成本 CPC（基准） | 1.55 | 元 | 基准期 2026-09-01 ~ 2026-09-15 |\n| 新客获取成本 CAC | 191.42 | 元 | 异常期 2026-09-16 ~ 2026-09-30 |\n| 新客获取成本 CAC（基准） | 28.24 | 元 | 基准期 2026-09-01 ~ 2026-09-15 |\n| 渠道 GMV | 728,331.75 | 元 | 异常期 2026-09-16 ~ 2026-09-30 |\n| 其他渠道 ROAS 区间 | 6.77~105.51 | 倍 | 异常期 2026-09-16 ~ 2026-09-30 |\n\n## 三、证据链\n\n### 证据 1｜分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 ROAS\n- 置信度：96%\n- 证据内容：channel_name = 社媒-信息流；channel_type = social；base_spend = 449060.75；anomaly_spend = 461314.63；base_roas = 5.92；anomaly_roas = 1.58\n\n### 证据 2｜分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 ROAS\n- 置信度：96%\n- 证据内容：channel_name = 内容-种草；channel_type = content；base_spend = 271985.94；anomaly_spend = 284646.67；base_roas = 7.85；anomaly_roas = 6.77\n\n### 证据 3｜分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 ROAS\n- 置信度：96%\n- 证据内容：channel_name = 搜索-品类词；channel_type = search；base_spend = 168237.04；anomaly_spend = 175937.93；base_roas = 10.3；anomaly_roas = 9.62\n\n### 证据 4｜分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 ROAS\n- 置信度：96%\n- 证据内容：channel_name = 搜索-品牌词；channel_type = search；base_spend = 184857.82；anomaly_spend = 175039.89；base_roas = 14.01；anomaly_roas = 10.96\n\n### 证据 5｜分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 ROAS\n- 置信度：96%\n- 证据内容：channel_name = 联盟-CPS；channel_type = alliance；base_spend = 70632.96；anomaly_spend = 67654.44；base_roas = 14.5；anomaly_roas = 13.66\n\n### 证据 6｜分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 ROAS\n- 置信度：96%\n- 证据内容：channel_name = 直访；channel_type = direct；base_spend = 12253.08；anomaly_spend = 10316.68；base_roas = 83.53；anomaly_roas = 105.51\n\n### 证据 7｜渠道流量效率指标（biz_ad_delivery）\n\n- 来源类型：database\n- 关联指标：点击率 / CPC / CAC\n- 置信度：93%\n- 证据内容：channel_name = 社媒-信息流；base_ctr_pct = 1.607；anomaly_ctr_pct = 0.861；base_cpc = 1.55；anomaly_cpc = 3.01；base_cac = 28.24；anomaly_cac = 191.42\n\n### 证据 8｜渠道流量效率指标（biz_ad_delivery）\n\n- 来源类型：database\n- 关联指标：点击率 / CPC / CAC\n- 置信度：93%\n- 证据内容：channel_name = 内容-种草；base_ctr_pct = 2.726；anomaly_ctr_pct = 2.539；base_cpc = 1.84；anomaly_cpc = 2.12；base_cac = 47.83；anomaly_cac = 56.93\n\n### 证据 9｜渠道流量效率指标（biz_ad_delivery）\n\n- 来源类型：database\n- 关联指标：点击率 / CPC / CAC\n- 置信度：93%\n- 证据内容：channel_name = 搜索-品类词；base_ctr_pct = 3.414；anomaly_ctr_pct = 3.486；base_cpc = 1.45；anomaly_cpc = 1.54；base_cac = 36.31；anomaly_cac = 43.96\n\n### 证据 10｜渠道流量效率指标（biz_ad_delivery）\n\n- 来源类型：database\n- 关联指标：点击率 / CPC / CAC\n- 置信度：93%\n- 证据内容：channel_name = 搜索-品牌词；base_ctr_pct = 3.472；anomaly_ctr_pct = 3.375；base_cpc = 1.63；anomaly_cpc = 1.55；base_cac = 43.2；anomaly_cac = 43.61\n\n### 证据 11｜渠道流量效率指标（biz_ad_delivery）\n\n- 来源类型：database\n- 关联指标：点击率 / CPC / CAC\n- 置信度：93%\n- 证据内容：channel_name = 联盟-CPS；base_ctr_pct = 4.01；anomaly_ctr_pct = 3.742；base_cpc = 1.02；anomaly_cpc = 1.05；base_cac = 25.68；anomaly_cac = 29.75\n\n### 证据 12｜渠道成交与退款（biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV / 退款额\n- 置信度：90%\n- 证据内容：channel_name = 社媒-信息流；base_order_cnt = 5391.0；anomaly_order_cnt = 1501.0；base_gmv = 2659333.65；anomaly_gmv = 728331.75；anomaly_refund_amount = 58268.17\n\n### 证据 13｜渠道成交与退款（biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV / 退款额\n- 置信度：90%\n- 证据内容：channel_name = 联盟-CPS；base_order_cnt = 2084.0；anomaly_order_cnt = 1868.0；base_gmv = 1024500.32；anomaly_gmv = 923989.52；anomaly_refund_amount = 63502.78\n\n### 证据 14｜渠道成交与退款（biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV / 退款额\n- 置信度：90%\n- 证据内容：channel_name = 直访；base_order_cnt = 2069.0；anomaly_order_cnt = 2188.0；base_gmv = 1023491.98；anomaly_gmv = 1088507.01；anomaly_refund_amount = 85831.72\n\n### 证据 15｜渠道成交与退款（biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV / 退款额\n- 置信度：90%\n- 证据内容：channel_name = 搜索-品类词；base_order_cnt = 3520.0；anomaly_order_cnt = 3432.0；base_gmv = 1732543.58；anomaly_gmv = 1692884.55；anomaly_refund_amount = 133262.01\n\n### 证据 16｜渠道成交与退款（biz_sales_summary）\n\n- 来源类型：database\n- 关联指标：渠道 GMV / 退款额\n- 置信度：90%\n- 证据内容：channel_name = 搜索-品牌词；base_order_cnt = 5237.0；anomaly_order_cnt = 3940.0；base_gmv = 2590680.92；anomaly_gmv = 1917945.61；anomaly_refund_amount = 142993.44\n\n### 证据 17｜渠道 ROAS 变化结论\n\n- 来源类型：database\n- 关联指标：渠道 GMV\n- 置信度：95%\n- 证据内容：花费 44.91 万元 → 46.13 万元（+2.73%），GMV 265.93 万元 → 72.83 万元（-72.61%），ROAS 5.92 → 1.58（-73.31%）。花费基本持平而 GMV 大幅下降，说明问题出在流量质量与转化效率，不是预算规模。\n\n### 证据 18｜知识库/01_归因分析方法论.md\n\n- 来源类型：knowledge\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：成可控因子。 - GMV = 流量 × 转化率 × 客单价 - 曝光转化链：曝光 → 点击（CTR）→ 加购 → 下单（CVR）→ 支付 - ROAS = 渠道 GMV ÷ 渠道投放花费 3. **定位异常**：对每个因子做「基准期 vs 异常期」对比，找出变化最大的那一层。 归因的关键是**对\n\n### 证据 19｜知识库/02_电商核心指标口径.md\n\n- 来源类型：knowledge\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：V | GMV ÷ 订单数 | 反映「货品结构」 | ## 二、投放效率 | 指标 | 公式 | 健康参考 | | --- | --- | --- | | ROAS | 渠道成交额 ÷ 渠道花费 | 美妆类目 ≥ 3.0 | | CPC | 花费 ÷ 点击量 | 越低越好，但需结合质量 | | CPM | 花费 ÷\n\n### 证据 20｜知识库/05_用户口碑与退款诊断.md\n\n- 来源类型：knowledge\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：、退款率上升的连带影响 退款不只是损失一笔收入，它会连锁触发： 1. 店铺权重下降（平台算法惩罚退款率高的店铺） 2. 自然流量减少 → 流量成本上升 → ROAS 恶化 3. 库存二次损失（退货商品可能需要折价处理） 4. 售后人力成本上升 → 平均处理时长增加 → 二次投诉 因此退款率是**不能拖的指标**，\n\n### 证据 21｜知识库方法论检索\n\n- 来源类型：database\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：source_type = knowledge；source_name = 知识库/01_归因分析方法论.md；snippet = 成可控因子。 - GMV = 流量 × 转化率 × 客单价 - 曝光转化链：曝光 → 点击（CTR）→ 加购 → 下单（CVR）→ 支付 - ROAS = 渠道 GMV ÷ 渠道投放花费 3. **定位异常**：对每个因子做「基准期 vs 异常期」对比，找出变化最大的那一层。 归因的关键是**对\n\n### 证据 22｜知识库方法论检索\n\n- 来源类型：database\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：source_type = knowledge；source_name = 知识库/02_电商核心指标口径.md；snippet = V | GMV ÷ 订单数 | 反映「货品结构」 | ## 二、投放效率 | 指标 | 公式 | 健康参考 | | --- | --- | --- | | ROAS | 渠道成交额 ÷ 渠道花费 | 美妆类目 ≥ 3.0 | | CPC | 花费 ÷ 点击量 | 越低越好，但需结合质量 | | CPM | 花费 ÷\n\n### 证据 23｜知识库方法论检索\n\n- 来源类型：database\n- 关联指标：分析方法论\n- 置信度：80%\n- 证据内容：source_type = knowledge；source_name = 知识库/05_用户口碑与退款诊断.md；snippet = 、退款率上升的连带影响 退款不只是损失一笔收入，它会连锁触发： 1. 店铺权重下降（平台算法惩罚退款率高的店铺） 2. 自然流量减少 → 流量成本上升 → ROAS 恶化 3. 库存二次损失（退货商品可能需要折价处理） 4. 售后人力成本上升 → 平均处理时长增加 → 二次投诉 因此退款率是**不能拖的指标**，\n\n## 四、结论\n\n归因结论：渠道「社媒-信息流」的投放效率恶化是**流量质量与素材效率问题**，不是预算问题。花费仅变化 +2.73%，但 ROAS 从 5.92 跌到 1.58（-73.31%）；同期其他渠道 ROAS 仍在 6.77~105.51 的正常区间，说明平台整体流量没有系统性贬值，问题集中在单一渠道的投放执行。\n\n具体证据支持以下判断：\n\n- 点击率下滑：1.607% → 0.861%（-46.42%），素材吸引力下降或人群定向漂移\n- 点击成本上升：CPC 1.55 元 → 3.01 元（+94.19%），竞价环境或定向竞争加剧\n- 获客成本上升：CAC 28.24 元 → 191.42 元（+577.83%），新客质量下降明显\n- 成交规模下滑：GMV 265.93 万元 → 72.83 万元（-72.61%）\n\n因果链条：素材老化 / 定向漂移 → 点击率 1.607% 降至 0.861%、CPC 升至 3.01 元 → 单客获取成本由 28.24 元升至 191.42 元 → 同样花费换来的 GMV 由 265.93 万元 降至 72.83 万元 → ROAS 崩塌。\n\n## 五、数据缺口\n\n以下数据缺口会限制结论的精度：\n- 缺少分广告计划的素材维度数据（素材上线时间、素材版本、投放人群包），无法定位到具体素材\n- 缺少竞品同期投放强度数据，无法量化竞价环境变化的影响权重\n- 缺少「社媒-信息流」渠道的落地页转化率埋点，无法区分「点击进来了不买」与「根本没点进来」\n\n## 六、下一步行动建议\n\n- **紧急（24 小时内）**：暂停「社媒-信息流」中 CPA 高于 191 元且近 7 日无转化的广告计划，先止住无效消耗（按当前效率测算，可减少约 15% 的浪费花费）；\n- **3 天内**：对该渠道做素材疲劳度排查，替换点击率低于渠道均值 70% 的素材，并重启 2~3 组历史高点击素材做 A/B 对照；\n- **3 天内**：复核定向人群包，比对基准期的高价值人群与当前投放人群的重合度，重合度低于 60% 需重建人群包；\n- **一周内**：为该渠道设置 ROAS 熔断线（低于 2.96 自动降预算 30% 并告警），避免再次出现「花了半个月才发现 ROI 已经腰斩」；\n- **持续**：把 ROAS、CPC、CAC 三项指标纳入渠道日报，与 GMV 同屏监控。\n\n---\n\n*本报告由经营多轮归因分析系统自动生成，结论均可回溯至上方证据链。*",
+    "result_file_path": "exports/2/29/分析报告_任务41_20261008_193057.md",
+    "download_url": "http://localhost:8000/api/results/download?result_id=41&format=markdown",
+    "created_at": "2026-10-08T19:30:57"
+  },
+  "module_sizes": {
+    "problem_definition_chars": 208,
+    "key_metrics_count": 13,
+    "evidence_list_count": 23,
+    "conclusion_text_chars": 493,
+    "missing_data_text_chars": 139,
+    "next_action_text_chars": 341,
+    "result_markdown_chars": 7889
+  },
+  "exports": {
+    "md": {
+      "status_code": 200,
+      "bytes": 13271,
+      "content_type": "text/markdown; charset=utf-8",
+      "magic": "2320e7bb"
+    },
+    "json": {
+      "status_code": 200,
+      "bytes": 15761,
+      "content_type": "application/json; charset=utf-8",
+      "magic": "7b0d0a20"
+    },
+    "xlsx": {
+      "status_code": 200,
+      "bytes": 11099,
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "magic": "504b0304"
+    }
+  },
+  "route": {
+    "route_log_line": "场景路由|market|渠道投放效率归因|turn=2",
+    "scenario_key": "market",
+    "scenario_name": "渠道投放效率归因",
+    "route_score_log": "场景路由得分：[{'key': 'market', 'name': '渠道投放效率归因', 'score': 11}, {'key': 'catalog', 'name': '商品目录质量归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=否",
+    "lifecycle_logs": [
+      "任务完成：场景「渠道投放效率归因」，指标 13 项，证据 23 条，耗时 411ms",
+      "场景路由|market|渠道投放效率归因|turn=2",
+      "任务开始执行",
+      "收到提问：信息流渠道 ROAS 从 5.9 掉到 1.6，投放预算没变，问题出在哪？"
+    ]
+  },
+  "sent_at": "2026-10-08T19:30:57",
+  "collected_at": "2026-10-08T19:30:58"
+}

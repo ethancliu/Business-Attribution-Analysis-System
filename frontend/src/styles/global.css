@@ -1,0 +1,91 @@
+@import './variables.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  color: var(--jy-text);
+  background: var(--jy-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-boot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--jy-text-secondary);
+}
+
+a {
+  color: var(--jy-brand);
+  text-decoration: none;
+}
+
+/* 统一滚动条，避免各页面观感不一致 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d8e3;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #bcc2d2;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 页面通用容器 */
+.jy-page {
+  padding: 20px 24px 32px;
+}
+
+.jy-page-title {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.jy-page-desc {
+  margin: 0 0 18px;
+  color: var(--jy-text-secondary);
+  font-size: 13px;
+}
+
+.jy-card {
+  background: var(--jy-bg-card);
+  border: 1px solid var(--jy-border-light);
+  border-radius: var(--jy-radius);
+  box-shadow: var(--jy-shadow);
+}
+
+.jy-muted {
+  color: var(--jy-text-secondary);
+}
+
+.jy-mono {
+  font-family: Consolas, 'Courier New', monospace;
+}
+
+/* 多行文本：保留换行同时不撑破容器 */
+.jy-pre-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.75;
+}

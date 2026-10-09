@@ -1,0 +1,30 @@
+/* 主题变量：品牌色、灰阶、状态色、圆角与阴影 */
+:root {
+  --jy-brand: #4b6bfb;
+  --jy-brand-dark: #3a55d9;
+  --jy-brand-soft: #eef2ff;
+
+  --jy-text: #1f2430;
+  --jy-text-regular: #4a5164;
+  --jy-text-secondary: #7a8194;
+  --jy-text-placeholder: #a6acbb;
+
+  --jy-border: #e3e6ef;
+  --jy-border-light: #eef0f6;
+  --jy-bg: #f5f7fb;
+  --jy-bg-card: #ffffff;
+  --jy-bg-hover: #f7f8fc;
+
+  --jy-success: #17a673;
+  --jy-warning: #e6a23c;
+  --jy-danger: #e5484d;
+  --jy-info: #8a91a3;
+
+  --jy-radius: 10px;
+  --jy-radius-sm: 6px;
+  --jy-shadow: 0 2px 12px rgba(31, 36, 48, 0.07);
+  --jy-shadow-lg: 0 8px 28px rgba(31, 36, 48, 0.12);
+
+  --jy-header-height: 60px;
+  --jy-sider-width: 288px;
+}

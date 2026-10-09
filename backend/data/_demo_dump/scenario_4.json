@@ -1,0 +1,473 @@
+{
+  "input_text": "我的商品页转化率最近掉得厉害，帮我看看是什么原因？",
+  "conversation_id": 31,
+  "task_id": 43,
+  "task_status": "success",
+  "error_message": null,
+  "duration_ms": 400,
+  "poll_seconds": 0.52,
+  "tool_call_count": 7,
+  "tool_calls": [
+    {
+      "seq": 1,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT c.category_name,\n                   ROUND(100 * SUM(CASE WHEN pc.stat_date BETWEEN '2026-09-01' AND '2026-09-15'\n                                        THEN pc.click_cnt ELSE 0 END)\n                         / NULLIF(SUM(CASE WHEN pc.stat_date BETWEEN '2026-09-01' AND '2026-09-15…",
+        "limit": 30
+      },
+      "status": "success",
+      "summary": "返回 5 行数据，字段 category_name, base_ctr_pct, anomaly_ctr_pct, anomaly_exposure。示例：category_name=服饰鞋包；base_ctr_pct=5.51；anomaly_ctr_pct=5.45；anomaly_exposure=530284.0",
+      "duration_ms": 8,
+      "started_at": "2026-10-08T19:30:59.102279",
+      "finished_at": "2026-10-08T19:30:59.102279",
+      "step_key": "ctr_by_category",
+      "step_title": "按品类对比基准期与异常期的曝光点击率"
+    },
+    {
+      "seq": 2,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT c.category_name,\n                   COUNT(*) AS sku_cnt,\n                   ROUND(AVG(p.title_length), 1) AS avg_title_len,\n                   ROUND(AVG(p.image_count), 2) AS avg_image_cnt,\n                   ROUND(AVG(p.attr_fill_rate), 1) AS avg_attr_fill_rate\n            FROM …",
+        "limit": 30
+      },
+      "status": "success",
+      "summary": "返回 5 行数据，字段 category_name, sku_cnt, avg_title_len, avg_image_cnt, avg_attr_fill_rate。示例：category_name=美妆个护；sku_cnt=12；avg_title_len=11.4；avg_image_cnt=1.25；avg_attr_fill_rate=36.3",
+      "duration_ms": 1,
+      "started_at": "2026-10-08T19:30:59.116517",
+      "finished_at": "2026-10-08T19:30:59.116517",
+      "step_key": "catalog_quality",
+      "step_title": "对比各品类商品标题长度、主图数量与属性填充率"
+    },
+    {
+      "seq": 3,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT se.search_keyword,\n                   SUM(CASE WHEN se.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN se.search_cnt ELSE 0 END) AS base_search,\n                   SUM(CASE WHEN se.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN se.zero_result_cnt ELSE 0 END) AS base_ze…",
+        "limit": 12
+      },
+      "status": "success",
+      "summary": "返回 6 行数据，字段 search_keyword, base_search, base_zero, anomaly_search, anomaly_zero。示例：search_keyword=氨基酸洁面；base_search=50017.0；base_zero=4448.0；anomaly_search=53199.0；anomaly_zero=17495.0",
+      "duration_ms": 3,
+      "started_at": "2026-10-08T19:30:59.136551",
+      "finished_at": "2026-10-08T19:30:59.136551",
+      "step_key": "zero_search",
+      "step_title": "定位零结果搜索词的放大情况"
+    },
+    {
+      "seq": 4,
+      "tool_name": "db_query",
+      "tool_args": {
+        "sql": "\n            SELECT ROUND(100 * SUM(CASE WHEN stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN order_cnt ELSE 0 END)\n                         / NULLIF(SUM(CASE WHEN stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN click_cnt ELSE 0 END), 0), 2)\n                       AS anomaly_click_to_order…",
+        "limit": 1
+      },
+      "status": "success",
+      "summary": "返回 1 行数据，字段 anomaly_click_to_order_pct, base_click_to_order_pct。示例：anomaly_click_to_order_pct=1.14；base_click_to_order_pct=2.65",
+      "duration_ms": 4,
+      "started_at": "2026-10-08T19:30:59.155169",
+      "finished_at": "2026-10-08T19:30:59.155169",
+      "step_key": "funnel",
+      "step_title": "校验 美妆个护 点击到下单的转化效率"
+    },
+    {
+      "seq": 5,
+      "tool_name": "text_search",
+      "tool_args": {
+        "keyword": "描述不符",
+        "scope": "review",
+        "limit": 8
+      },
+      "status": "success",
+      "summary": "关键词「描述不符」命中 8 处（database 8 条）。首条来自 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）：标题写保质期到 2028 年，收到的只有 2026 年 10 月",
+      "duration_ms": 1,
+      "started_at": "2026-10-08T19:30:59.169369",
+      "finished_at": "2026-10-08T19:30:59.169369",
+      "step_key": "voice_of_customer",
+      "step_title": "检索用户评论中的「描述不符」反馈原文"
+    },
+    {
+      "seq": 6,
+      "tool_name": "file_write",
+      "tool_args": {
+        "file_name": "品类CTR对比.csv",
+        "content": [
+          {
+            "category_name": "服饰鞋包",
+            "base_ctr_pct": 5.51,
+            "anomaly_ctr_pct": 5.45,
+            "anomaly_exposure": 530284.0
+          },
+          {
+            "category_name": "家居日用",
+            "base_ctr_pct": 5.48,
+            "anomaly_ctr_pct": 5.52,
+            "anomaly_exposure": 524072.0
+          },
+          {
+            "category_name": "数码配件",
+            "base_ctr_pct": 5.47,
+            "anomaly_ctr_pct": 5.45,
+            "anomaly_exposure": 519743.0
+          },
+          {
+            "category_name": "食品生鲜",
+            "base_ctr_pct": 5.43,
+            "anomaly_ctr_pct": 5.49,
+            "anomaly_exposure": 519899.0
+          },
+          {
+            "category_name": "美妆个护",
+            "base_ctr_pct": 4.2,
+            "anomaly_ctr_pct": 2.09,
+            "anomaly_exposure": 522429.0
+          }
+        ],
+        "format": "table"
+      },
+      "status": "success",
+      "summary": "已写出中间产物 品类CTR对比_20261008_193059.csv（169 B）到工作区",
+      "duration_ms": 5,
+      "started_at": "2026-10-08T19:30:59.187081",
+      "finished_at": "2026-10-08T19:30:59.187081",
+      "step_key": "artifact",
+      "step_title": "把品类 CTR 对比明细写出到会话工作区"
+    },
+    {
+      "seq": 7,
+      "tool_name": "result_generate",
+      "tool_args": {
+        "scene": "catalog",
+        "metrics": 12,
+        "evidence": 27
+      },
+      "status": "success",
+      "summary": "已生成标准报告：关键指标 12 项、证据 27 条、结论 549 字",
+      "duration_ms": 0,
+      "started_at": "2026-10-08T19:30:59.215280",
+      "finished_at": "2026-10-08T19:30:59.215280",
+      "step_key": "result_generate",
+      "step_title": "生成标准化分析报告"
+    }
+  ],
+  "result_id": 43,
+  "result": {
+    "result_id": 43,
+    "task_id": 43,
+    "conversation_id": 31,
+    "problem_definition": "用户在「我的商品页转化率最近掉得厉害，帮我看看是什么原因？」中反映的问题，经数据核对定位为：\n美妆个护品类的曝光点击率在异常期（2026-09-16 ~ 2026-09-30）由 4.2% 下滑至 2.09%，降幅 50.24%；同期其他品类 CTR 稳定在 5.45%~5.52%，说明不是全站流量问题，而是该品类的商品呈现问题。",
+    "key_metrics": [
+      {
+        "metric_name": "美妆个护 曝光点击率",
+        "metric_unit": "%",
+        "metric_value": "2.09",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "美妆个护 曝光点击率（基准）",
+        "metric_unit": "%",
+        "metric_value": "4.2",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15"
+      },
+      {
+        "metric_name": "点击率变化幅度",
+        "metric_unit": "%",
+        "metric_value": "-50.24",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "其他品类 CTR 区间",
+        "metric_unit": "%",
+        "metric_value": "5.45%~5.52%",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "平均标题字数",
+        "metric_unit": "字",
+        "metric_value": "11.4",
+        "metric_period": "美妆个护 全量 SKU"
+      },
+      {
+        "metric_name": "其他品类平均标题字数",
+        "metric_unit": "字",
+        "metric_value": "21.8",
+        "metric_period": "对比组"
+      },
+      {
+        "metric_name": "平均主图数量",
+        "metric_unit": "张",
+        "metric_value": "1.25",
+        "metric_period": "美妆个护 全量 SKU"
+      },
+      {
+        "metric_name": "其他品类平均主图数量",
+        "metric_unit": "张",
+        "metric_value": "4.81",
+        "metric_period": "对比组"
+      },
+      {
+        "metric_name": "属性填充率",
+        "metric_unit": "%",
+        "metric_value": "36.3",
+        "metric_period": "美妆个护 全量 SKU"
+      },
+      {
+        "metric_name": "其他品类属性填充率",
+        "metric_unit": "%",
+        "metric_value": "87",
+        "metric_period": "对比组"
+      },
+      {
+        "metric_name": "点击到下单转化率",
+        "metric_unit": "%",
+        "metric_value": "1.14",
+        "metric_period": "异常期 2026-09-16 ~ 2026-09-30"
+      },
+      {
+        "metric_name": "点击到下单转化率变化",
+        "metric_unit": "%",
+        "metric_value": "-56.98",
+        "metric_period": "基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30"
+      }
+    ],
+    "evidence_list": [
+      {
+        "confidence": 0.96,
+        "source_name": "品类曝光点击率对比（biz_product_click）",
+        "source_type": "database",
+        "evidence_text": "category_name = 服饰鞋包；base_ctr_pct = 5.51；anomaly_ctr_pct = 5.45；anomaly_exposure = 530284.0",
+        "related_metric": "商品点击率 CTR"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "品类曝光点击率对比（biz_product_click）",
+        "source_type": "database",
+        "evidence_text": "category_name = 家居日用；base_ctr_pct = 5.48；anomaly_ctr_pct = 5.52；anomaly_exposure = 524072.0",
+        "related_metric": "商品点击率 CTR"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "品类曝光点击率对比（biz_product_click）",
+        "source_type": "database",
+        "evidence_text": "category_name = 数码配件；base_ctr_pct = 5.47；anomaly_ctr_pct = 5.45；anomaly_exposure = 519743.0",
+        "related_metric": "商品点击率 CTR"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "品类曝光点击率对比（biz_product_click）",
+        "source_type": "database",
+        "evidence_text": "category_name = 食品生鲜；base_ctr_pct = 5.43；anomaly_ctr_pct = 5.49；anomaly_exposure = 519899.0",
+        "related_metric": "商品点击率 CTR"
+      },
+      {
+        "confidence": 0.96,
+        "source_name": "品类曝光点击率对比（biz_product_click）",
+        "source_type": "database",
+        "evidence_text": "category_name = 美妆个护；base_ctr_pct = 4.2；anomaly_ctr_pct = 2.09；anomaly_exposure = 522429.0",
+        "related_metric": "商品点击率 CTR"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "商品目录质量字段对比（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 美妆个护；sku_cnt = 12；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill_rate = 36.3",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "商品目录质量字段对比（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 服饰鞋包；sku_cnt = 12；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill_rate = 87.7",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "商品目录质量字段对比（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 食品生鲜；sku_cnt = 12；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill_rate = 88.4",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "商品目录质量字段对比（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 家居日用；sku_cnt = 12；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill_rate = 86.3",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.93,
+        "source_name": "商品目录质量字段对比（biz_product）",
+        "source_type": "database",
+        "evidence_text": "category_name = 数码配件；sku_cnt = 12；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill_rate = 85.6",
+        "related_metric": "目录质量分"
+      },
+      {
+        "confidence": 0.91,
+        "source_name": "零结果搜索词统计（biz_search_exposure）",
+        "source_type": "database",
+        "evidence_text": "search_keyword = 氨基酸洁面；base_search = 50017.0；base_zero = 4448.0；anomaly_search = 53199.0；anomaly_zero = 17495.0",
+        "related_metric": "搜索无结果率"
+      },
+      {
+        "confidence": 0.91,
+        "source_name": "零结果搜索词统计（biz_search_exposure）",
+        "source_type": "database",
+        "evidence_text": "search_keyword = 玻尿酸精华；base_search = 50690.0；base_zero = 4546.0；anomaly_search = 51066.0；anomaly_zero = 17165.0",
+        "related_metric": "搜索无结果率"
+      },
+      {
+        "confidence": 0.91,
+        "source_name": "零结果搜索词统计（biz_search_exposure）",
+        "source_type": "database",
+        "evidence_text": "search_keyword = 神经酰胺；base_search = 53249.0；base_zero = 4475.0；anomaly_search = 54537.0；anomaly_zero = 16637.0",
+        "related_metric": "搜索无结果率"
+      },
+      {
+        "confidence": 0.91,
+        "source_name": "零结果搜索词统计（biz_search_exposure）",
+        "source_type": "database",
+        "evidence_text": "search_keyword = 视黄醇眼霜；base_search = 53014.0；base_zero = 2077.0；anomaly_search = 50876.0；anomaly_zero = 2943.0",
+        "related_metric": "搜索无结果率"
+      },
+      {
+        "confidence": 0.91,
+        "source_name": "零结果搜索词统计（biz_search_exposure）",
+        "source_type": "database",
+        "evidence_text": "search_keyword = 水杨酸洁面；base_search = 53855.0；base_zero = 2032.0；anomaly_search = 52423.0；anomaly_zero = 2875.0",
+        "related_metric": "搜索无结果率"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "点击到下单转化率（biz_product_conversion）",
+        "source_type": "database",
+        "evidence_text": "基准期点击下单转化率 2.65%，异常期 1.14%，相对变化 -56.98%",
+        "related_metric": "点击下单转化率"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）",
+        "source_type": "database",
+        "evidence_text": "标题写保质期到 2028 年，收到的只有 2026 年 10 月",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符）",
+        "source_type": "database",
+        "evidence_text": "标题写保质期到 2028 年，收到的只有 2026 年 10 月",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符）",
+        "source_type": "database",
+        "evidence_text": "详情页写 100ml，实际收到只有 80ml，规格标错了吧",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符）",
+        "source_type": "database",
+        "evidence_text": "标题写保质期到 2028 年，收到的只有 2026 年 10 月",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符）",
+        "source_type": "database",
+        "evidence_text": "详情页写 100ml，实际收到只有 80ml，规格标错了吧",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.88,
+        "source_name": "点击到下单转化率（biz_product_conversion）",
+        "source_type": "database",
+        "evidence_text": "anomaly_click_to_order_pct = 1.14；base_click_to_order_pct = 2.65",
+        "related_metric": "点击下单转化率"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论原文检索",
+        "source_type": "database",
+        "evidence_text": "source_type = database；source_name = 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论原文检索",
+        "source_type": "database",
+        "evidence_text": "source_type = database；source_name = 用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论原文检索",
+        "source_type": "database",
+        "evidence_text": "source_type = database；source_name = 用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论原文检索",
+        "source_type": "database",
+        "evidence_text": "source_type = database；source_name = 用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月",
+        "related_metric": "负面反馈占比"
+      },
+      {
+        "confidence": 0.85,
+        "source_name": "用户评论原文检索",
+        "source_type": "database",
+        "evidence_text": "source_type = database；source_name = 用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧",
+        "related_metric": "负面反馈占比"
+      }
+    ],
+    "conclusion_text": "归因结论：美妆个护品类曝光点击率下滑 50.24%，由 4.2% 降至 2.09%，属于**品类级商品呈现问题**，而非流量总量问题（同期其他品类 CTR 稳定在 5.45%~5.52%）。\n\n具体证据支持以下三条主因：\n\n- 标题过短：平均 11.4 字，显著低于其他品类的 21.8 字，关键词覆盖不足，搜索匹配度下降\n- 主图数量不足：平均 1.25 张，其他品类为 4.81 张，缺少多角度/场景图，首屏吸引力弱\n- 属性填充率偏低：36.3% 对比其他品类 87.0%，筛选与推荐场景下大量商品无法被召回\n- 高意图搜索词承接失败：「氨基酸洁面」零结果次数由 4448 次升至 17495 次（放大 3.93 倍）；「玻尿酸精华」零结果次数由 4546 次升至 17165 次（放大 3.78 倍）；「神经酰胺」零结果次数由 4475 次升至 16637 次（放大 3.72 倍）\n- 转化同步走弱：点击到下单转化率由 2.65% 降至 1.14%（-56.98%），说明进来的流量质量也随之下滑\n\n因果链条：目录信息缺失（标题短 / 主图少 / 属性空）→ 搜索与推荐召回不足 + 商品卡吸引力下降→ 曝光点击率由 4.2% 跌至 2.09% → 点击下单转化率同步下降 56.98%。",
+    "missing_data_text": "本次分析已覆盖曝光、点击、转化、搜索、评论五类数据。仍存在以下数据缺口：\n- 缺少商品卡改版/主图下架的操作日志，无法确认变更发生的准确时点\n- 缺少竞品同品类价格与促销力度数据，无法完全排除外部竞争因素\n- 缺少站内推荐流与搜索流的分渠道曝光拆分，两条流量的贡献占比未量化",
+    "next_action_text": "- **紧急（24 小时内）**：筛出 美妆个护 品类中标题字数 < 15 字或主图 < 3 张的 SKU，按曝光量降序优先补齐，预计可恢复 30% 以上的 CTR 损失；\n- **本周内**：为「氨基酸洁面」等高意图零结果词建立兜底词表与召回规则，先止血再优化；\n- **本周内**：把属性填充率纳入商品上架卡点（低于 80% 不允许上架），并批量补齐存量 SKU；\n- **持续**：为该品类建立 CTR 日监控看板，跌幅超过 15% 自动告警，避免同类问题再次潜伏。",
+    "result_markdown": "# 经营归因分析报告\n\n- 任务编号：#43\n- 分析问题：我的商品页转化率最近掉得厉害，帮我看看是什么原因？\n- 完成时间：2026-10-08T19:30:59\n\n## 一、问题定义\n\n用户在「我的商品页转化率最近掉得厉害，帮我看看是什么原因？」中反映的问题，经数据核对定位为：\n美妆个护品类的曝光点击率在异常期（2026-09-16 ~ 2026-09-30）由 4.2% 下滑至 2.09%，降幅 50.24%；同期其他品类 CTR 稳定在 5.45%~5.52%，说明不是全站流量问题，而是该品类的商品呈现问题。\n\n## 二、关键指标\n\n| 指标名称 | 指标值 | 单位 | 统计口径/周期 |\n| --- | --- | --- | --- |\n| 美妆个护 曝光点击率 | 2.09 | % | 异常期 2026-09-16 ~ 2026-09-30 |\n| 美妆个护 曝光点击率（基准） | 4.2 | % | 基准期 2026-09-01 ~ 2026-09-15 |\n| 点击率变化幅度 | -50.24 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30 |\n| 其他品类 CTR 区间 | 5.45%~5.52% | % | 异常期 2026-09-16 ~ 2026-09-30 |\n| 平均标题字数 | 11.4 | 字 | 美妆个护 全量 SKU |\n| 其他品类平均标题字数 | 21.8 | 字 | 对比组 |\n| 平均主图数量 | 1.25 | 张 | 美妆个护 全量 SKU |\n| 其他品类平均主图数量 | 4.81 | 张 | 对比组 |\n| 属性填充率 | 36.3 | % | 美妆个护 全量 SKU |\n| 其他品类属性填充率 | 87 | % | 对比组 |\n| 点击到下单转化率 | 1.14 | % | 异常期 2026-09-16 ~ 2026-09-30 |\n| 点击到下单转化率变化 | -56.98 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30 |\n\n## 三、证据链\n\n### 证据 1｜品类曝光点击率对比（biz_product_click）\n\n- 来源类型：database\n- 关联指标：商品点击率 CTR\n- 置信度：96%\n- 证据内容：category_name = 服饰鞋包；base_ctr_pct = 5.51；anomaly_ctr_pct = 5.45；anomaly_exposure = 530284.0\n\n### 证据 2｜品类曝光点击率对比（biz_product_click）\n\n- 来源类型：database\n- 关联指标：商品点击率 CTR\n- 置信度：96%\n- 证据内容：category_name = 家居日用；base_ctr_pct = 5.48；anomaly_ctr_pct = 5.52；anomaly_exposure = 524072.0\n\n### 证据 3｜品类曝光点击率对比（biz_product_click）\n\n- 来源类型：database\n- 关联指标：商品点击率 CTR\n- 置信度：96%\n- 证据内容：category_name = 数码配件；base_ctr_pct = 5.47；anomaly_ctr_pct = 5.45；anomaly_exposure = 519743.0\n\n### 证据 4｜品类曝光点击率对比（biz_product_click）\n\n- 来源类型：database\n- 关联指标：商品点击率 CTR\n- 置信度：96%\n- 证据内容：category_name = 食品生鲜；base_ctr_pct = 5.43；anomaly_ctr_pct = 5.49；anomaly_exposure = 519899.0\n\n### 证据 5｜品类曝光点击率对比（biz_product_click）\n\n- 来源类型：database\n- 关联指标：商品点击率 CTR\n- 置信度：96%\n- 证据内容：category_name = 美妆个护；base_ctr_pct = 4.2；anomaly_ctr_pct = 2.09；anomaly_exposure = 522429.0\n\n### 证据 6｜商品目录质量字段对比（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：93%\n- 证据内容：category_name = 美妆个护；sku_cnt = 12；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill_rate = 36.3\n\n### 证据 7｜商品目录质量字段对比（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：93%\n- 证据内容：category_name = 服饰鞋包；sku_cnt = 12；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill_rate = 87.7\n\n### 证据 8｜商品目录质量字段对比（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：93%\n- 证据内容：category_name = 食品生鲜；sku_cnt = 12；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill_rate = 88.4\n\n### 证据 9｜商品目录质量字段对比（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：93%\n- 证据内容：category_name = 家居日用；sku_cnt = 12；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill_rate = 86.3\n\n### 证据 10｜商品目录质量字段对比（biz_product）\n\n- 来源类型：database\n- 关联指标：目录质量分\n- 置信度：93%\n- 证据内容：category_name = 数码配件；sku_cnt = 12；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill_rate = 85.6\n\n### 证据 11｜零结果搜索词统计（biz_search_exposure）\n\n- 来源类型：database\n- 关联指标：搜索无结果率\n- 置信度：91%\n- 证据内容：search_keyword = 氨基酸洁面；base_search = 50017.0；base_zero = 4448.0；anomaly_search = 53199.0；anomaly_zero = 17495.0\n\n### 证据 12｜零结果搜索词统计（biz_search_exposure）\n\n- 来源类型：database\n- 关联指标：搜索无结果率\n- 置信度：91%\n- 证据内容：search_keyword = 玻尿酸精华；base_search = 50690.0；base_zero = 4546.0；anomaly_search = 51066.0；anomaly_zero = 17165.0\n\n### 证据 13｜零结果搜索词统计（biz_search_exposure）\n\n- 来源类型：database\n- 关联指标：搜索无结果率\n- 置信度：91%\n- 证据内容：search_keyword = 神经酰胺；base_search = 53249.0；base_zero = 4475.0；anomaly_search = 54537.0；anomaly_zero = 16637.0\n\n### 证据 14｜零结果搜索词统计（biz_search_exposure）\n\n- 来源类型：database\n- 关联指标：搜索无结果率\n- 置信度：91%\n- 证据内容：search_keyword = 视黄醇眼霜；base_search = 53014.0；base_zero = 2077.0；anomaly_search = 50876.0；anomaly_zero = 2943.0\n\n### 证据 15｜零结果搜索词统计（biz_search_exposure）\n\n- 来源类型：database\n- 关联指标：搜索无结果率\n- 置信度：91%\n- 证据内容：search_keyword = 水杨酸洁面；base_search = 53855.0；base_zero = 2032.0；anomaly_search = 52423.0；anomaly_zero = 2875.0\n\n### 证据 16｜点击到下单转化率（biz_product_conversion）\n\n- 来源类型：database\n- 关联指标：点击下单转化率\n- 置信度：88%\n- 证据内容：基准期点击下单转化率 2.65%，异常期 1.14%，相对变化 -56.98%\n\n### 证据 17｜用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：标题写保质期到 2028 年，收到的只有 2026 年 10 月\n\n### 证据 18｜用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符）\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：标题写保质期到 2028 年，收到的只有 2026 年 10 月\n\n### 证据 19｜用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符）\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：详情页写 100ml，实际收到只有 80ml，规格标错了吧\n\n### 证据 20｜用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符）\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：标题写保质期到 2028 年，收到的只有 2026 年 10 月\n\n### 证据 21｜用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符）\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：详情页写 100ml，实际收到只有 80ml，规格标错了吧\n\n### 证据 22｜点击到下单转化率（biz_product_conversion）\n\n- 来源类型：database\n- 关联指标：点击下单转化率\n- 置信度：88%\n- 证据内容：anomaly_click_to_order_pct = 1.14；base_click_to_order_pct = 2.65\n\n### 证据 23｜用户评论原文检索\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：source_type = database；source_name = 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月\n\n### 证据 24｜用户评论原文检索\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：source_type = database；source_name = 用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月\n\n### 证据 25｜用户评论原文检索\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：source_type = database；source_name = 用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧\n\n### 证据 26｜用户评论原文检索\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：source_type = database；source_name = 用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月\n\n### 证据 27｜用户评论原文检索\n\n- 来源类型：database\n- 关联指标：负面反馈占比\n- 置信度：85%\n- 证据内容：source_type = database；source_name = 用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧\n\n## 四、结论\n\n归因结论：美妆个护品类曝光点击率下滑 50.24%，由 4.2% 降至 2.09%，属于**品类级商品呈现问题**，而非流量总量问题（同期其他品类 CTR 稳定在 5.45%~5.52%）。\n\n具体证据支持以下三条主因：\n\n- 标题过短：平均 11.4 字，显著低于其他品类的 21.8 字，关键词覆盖不足，搜索匹配度下降\n- 主图数量不足：平均 1.25 张，其他品类为 4.81 张，缺少多角度/场景图，首屏吸引力弱\n- 属性填充率偏低：36.3% 对比其他品类 87.0%，筛选与推荐场景下大量商品无法被召回\n- 高意图搜索词承接失败：「氨基酸洁面」零结果次数由 4448 次升至 17495 次（放大 3.93 倍）；「玻尿酸精华」零结果次数由 4546 次升至 17165 次（放大 3.78 倍）；「神经酰胺」零结果次数由 4475 次升至 16637 次（放大 3.72 倍）\n- 转化同步走弱：点击到下单转化率由 2.65% 降至 1.14%（-56.98%），说明进来的流量质量也随之下滑\n\n因果链条：目录信息缺失（标题短 / 主图少 / 属性空）→ 搜索与推荐召回不足 + 商品卡吸引力下降→ 曝光点击率由 4.2% 跌至 2.09% → 点击下单转化率同步下降 56.98%。\n\n## 五、数据缺口\n\n本次分析已覆盖曝光、点击、转化、搜索、评论五类数据。仍存在以下数据缺口：\n- 缺少商品卡改版/主图下架的操作日志，无法确认变更发生的准确时点\n- 缺少竞品同品类价格与促销力度数据，无法完全排除外部竞争因素\n- 缺少站内推荐流与搜索流的分渠道曝光拆分，两条流量的贡献占比未量化\n\n## 六、下一步行动建议\n\n- **紧急（24 小时内）**：筛出 美妆个护 品类中标题字数 < 15 字或主图 < 3 张的 SKU，按曝光量降序优先补齐，预计可恢复 30% 以上的 CTR 损失；\n- **本周内**：为「氨基酸洁面」等高意图零结果词建立兜底词表与召回规则，先止血再优化；\n- **本周内**：把属性填充率纳入商品上架卡点（低于 80% 不允许上架），并批量补齐存量 SKU；\n- **持续**：为该品类建立 CTR 日监控看板，跌幅超过 15% 自动告警，避免同类问题再次潜伏。\n\n---\n\n*本报告由经营多轮归因分析系统自动生成，结论均可回溯至上方证据链。*",
+    "result_file_path": "exports/2/31/分析报告_任务43_20261008_193059.md",
+    "download_url": "http://localhost:8000/api/results/download?result_id=43&format=markdown",
+    "created_at": "2026-10-08T19:30:59"
+  },
+  "module_sizes": {
+    "problem_definition_chars": 166,
+    "key_metrics_count": 12,
+    "evidence_list_count": 27,
+    "conclusion_text_chars": 549,
+    "missing_data_text_chars": 137,
+    "next_action_text_chars": 236,
+    "result_markdown_chars": 6716
+  },
+  "exports": {
+    "md": {
+      "status_code": 200,
+      "bytes": 11947,
+      "content_type": "text/markdown; charset=utf-8",
+      "magic": "2320e7bb"
+    },
+    "json": {
+      "status_code": 200,
+      "bytes": 14556,
+      "content_type": "application/json; charset=utf-8",
+      "magic": "7b0d0a20"
+    },
+    "xlsx": {
+      "status_code": 200,
+      "bytes": 10318,
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "magic": "504b0304"
+    }
+  },
+  "route": {
+    "route_log_line": "场景路由|catalog|商品目录质量归因|turn=2",
+    "scenario_key": "catalog",
+    "scenario_name": "商品目录质量归因",
+    "route_score_log": "场景路由得分：[{'key': 'catalog', 'name': '商品目录质量归因', 'score': 2}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 1}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=否",
+    "lifecycle_logs": [
+      "任务完成：场景「商品目录质量归因」，指标 12 项，证据 27 条，耗时 406ms",
+      "场景路由|catalog|商品目录质量归因|turn=2",
+      "任务开始执行",
+      "收到提问：我的商品页转化率最近掉得厉害，帮我看看是什么原因？"
+    ]
+  },
+  "sent_at": "2026-10-08T19:30:59",
+  "collected_at": "2026-10-08T19:30:59"
+}

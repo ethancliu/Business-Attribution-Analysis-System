@@ -1,0 +1,152 @@
+[
+  {
+    "idx": 1,
+    "question": "美妆个护类目点击率腰斩，从 4.2% 掉到 2.1%，问题出在哪？",
+    "conversation_id": 28,
+    "task_id": 40,
+    "task_status": "success",
+    "duration_ms": 478,
+    "scenario_key": "catalog",
+    "scenario_name": "商品目录质量归因",
+    "tool_call_count": 7,
+    "module_sizes": {
+      "problem_definition_chars": 174,
+      "key_metrics_count": 12,
+      "evidence_list_count": 27,
+      "conclusion_text_chars": 549,
+      "missing_data_text_chars": 137,
+      "next_action_text_chars": 236,
+      "result_markdown_chars": 6732
+    },
+    "exports": {
+      "md": 11951,
+      "json": 14558,
+      "xlsx": 10310
+    }
+  },
+  {
+    "idx": 2,
+    "question": "信息流渠道 ROAS 从 5.9 掉到 1.6，投放预算没变，问题出在哪？",
+    "conversation_id": 29,
+    "task_id": 41,
+    "task_status": "success",
+    "duration_ms": 406,
+    "scenario_key": "market",
+    "scenario_name": "渠道投放效率归因",
+    "tool_call_count": 6,
+    "module_sizes": {
+      "problem_definition_chars": 208,
+      "key_metrics_count": 13,
+      "evidence_list_count": 23,
+      "conclusion_text_chars": 493,
+      "missing_data_text_chars": 139,
+      "next_action_text_chars": 341,
+      "result_markdown_chars": 7889
+    },
+    "exports": {
+      "md": 13271,
+      "json": 15761,
+      "xlsx": 11099
+    }
+  },
+  {
+    "idx": 3,
+    "question": "用户主要在抱怨什么？差评有没有集中爆发的点？",
+    "conversation_id": 30,
+    "task_id": 42,
+    "task_status": "success",
+    "duration_ms": 336,
+    "scenario_key": "feedback",
+    "scenario_name": "用户反馈与口碑归因",
+    "tool_call_count": 6,
+    "module_sizes": {
+      "problem_definition_chars": 134,
+      "key_metrics_count": 10,
+      "evidence_list_count": 24,
+      "conclusion_text_chars": 403,
+      "missing_data_text_chars": 125,
+      "next_action_text_chars": 227,
+      "result_markdown_chars": 5922
+    },
+    "exports": {
+      "md": 10781,
+      "json": 13031,
+      "xlsx": 9863
+    }
+  },
+  {
+    "idx": 4,
+    "question": "我的商品页转化率最近掉得厉害，帮我看看是什么原因？",
+    "conversation_id": 31,
+    "task_id": 43,
+    "task_status": "success",
+    "duration_ms": 400,
+    "scenario_key": "catalog",
+    "scenario_name": "商品目录质量归因",
+    "tool_call_count": 7,
+    "module_sizes": {
+      "problem_definition_chars": 166,
+      "key_metrics_count": 12,
+      "evidence_list_count": 27,
+      "conclusion_text_chars": 549,
+      "missing_data_text_chars": 137,
+      "next_action_text_chars": 236,
+      "result_markdown_chars": 6716
+    },
+    "exports": {
+      "md": 11947,
+      "json": 14556,
+      "xlsx": 10318
+    }
+  },
+  {
+    "idx": 5,
+    "question": "9 月下半月整体 GMV 环比下滑，是哪些因素导致的？",
+    "conversation_id": 32,
+    "task_id": 44,
+    "task_status": "success",
+    "duration_ms": 474,
+    "scenario_key": "growth",
+    "scenario_name": "大盘经营下滑归因",
+    "tool_call_count": 8,
+    "module_sizes": {
+      "problem_definition_chars": 217,
+      "key_metrics_count": 20,
+      "evidence_list_count": 26,
+      "conclusion_text_chars": 619,
+      "missing_data_text_chars": 227,
+      "next_action_text_chars": 254,
+      "result_markdown_chars": 7730
+    },
+    "exports": {
+      "md": 12661,
+      "json": 16074,
+      "xlsx": 10886
+    }
+  },
+  {
+    "idx": 6,
+    "question": "这次促销活动的效果为什么不如预期？",
+    "conversation_id": 33,
+    "task_id": 45,
+    "task_status": "success",
+    "duration_ms": 310,
+    "scenario_key": "generic",
+    "scenario_name": "通用经营体检",
+    "tool_call_count": 6,
+    "module_sizes": {
+      "problem_definition_chars": 140,
+      "key_metrics_count": 9,
+      "evidence_list_count": 38,
+      "conclusion_text_chars": 320,
+      "missing_data_text_chars": 125,
+      "next_action_text_chars": 223,
+      "result_markdown_chars": 8421
+    },
+    "exports": {
+      "md": 14715,
+      "json": 17596,
+      "xlsx": 11023
+    }
+  }
+]

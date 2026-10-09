@@ -1,0 +1,836 @@
+====================================================================================================
+### scenario_1.json
+提问: 美妆个护类目点击率腰斩，从 4.2% 掉到 2.1%，问题出在哪？
+conv=28 task=40 status=success result_id=40 poll=0.61s
+完成日志: 任务完成：场景「商品目录质量归因」，指标 12 项，证据 27 条，耗时 487ms
+路由日志: 场景路由|catalog|商品目录质量归因|turn=2
+路由得分: 场景路由得分：[{'key': 'catalog', 'name': '商品目录质量归因', 'score': 3}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=否
+
+-- 工具调用链 --
+1 | db_query | success | 11ms | rows=5 | SELECT c.category_name, ROUND(100 * SUM(CASE WHEN pc.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN pc.c…
+    summary: 返回 5 行数据，字段 category_name, base_ctr_pct, anomaly_ctr_pct, anomaly_exposure。示例：category_name=服饰鞋包；base_ctr_pct=5.51；anomaly_ctr_pct=5.45；anomaly_exposure=530284.0
+2 | db_query | success | 3ms | rows=5 | SELECT c.category_name, COUNT(*) AS sku_cnt, ROUND(AVG(p.title_length), 1) AS avg_title_len, ROUND(AVG(p.image…
+    summary: 返回 5 行数据，字段 category_name, sku_cnt, avg_title_len, avg_image_cnt, avg_attr_fill_rate。示例：category_name=美妆个护；sku_cnt=12；avg_title_len=11.4；avg_image_cnt=1.25；avg_attr_fill_rate=36.3
+3 | db_query | success | 5ms | rows=6 | SELECT se.search_keyword, SUM(CASE WHEN se.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN se.search_cnt …
+    summary: 返回 6 行数据，字段 search_keyword, base_search, base_zero, anomaly_search, anomaly_zero。示例：search_keyword=氨基酸洁面；base_search=50017.0；base_zero=4448.0；anomaly_search=53199.0；anomaly_zero=17495.0
+4 | db_query | success | 5ms | rows=1 | SELECT ROUND(100 * SUM(CASE WHEN stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN order_cnt ELSE 0 END) / …
+    summary: 返回 1 行数据，字段 anomaly_click_to_order_pct, base_click_to_order_pct。示例：anomaly_click_to_order_pct=1.14；base_click_to_order_pct=2.65
+5 | text_search | success | 2ms | rows=8(命中) | keyword=描述不符 scope=review limit=8
+    summary: 关键词「描述不符」命中 8 处（database 8 条）。首条来自 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）：标题写保质期到 2028 年，收到的只有 2026 年 10 月
+6 | file_write | success | 5ms | rows=- | file_name=品类CTR对比.csv format=table content=@前序步骤
+    summary: 已写出中间产物 品类CTR对比_20261008_193056.csv（169 B）到工作区
+7 | result_generate | success | 0ms | rows=- | scene=catalog metrics=12 evidence=27
+    summary: 已生成标准报告：关键指标 12 项、证据 27 条、结论 549 字
+
+-- 导出字节 --
+md: status=200 bytes=11951 ct=text/markdown; charset=utf-8
+json: status=200 bytes=14558 ct=application/json; charset=utf-8
+xlsx: status=200 bytes=10310 ct=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+-- 模块1 问题定义 --
+用户在「美妆个护类目点击率腰斩，从 4.2% 掉到 2.1%，问题出在哪？」中反映的问题，经数据核对定位为：
+美妆个护品类的曝光点击率在异常期（2026-09-16 ~ 2026-09-30）由 4.2% 下滑至 2.09%，降幅 50.24%；同期其他品类 CTR 稳定在 5.45%~5.52%，说明不是全站流量问题，而是该品类的商品呈现问题。
+
+-- 模块2 关键指标 --
+美妆个护 曝光点击率 | 2.09 | % | 异常期 2026-09-16 ~ 2026-09-30
+美妆个护 曝光点击率（基准） | 4.2 | % | 基准期 2026-09-01 ~ 2026-09-15
+点击率变化幅度 | -50.24 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+其他品类 CTR 区间 | 5.45%~5.52% | % | 异常期 2026-09-16 ~ 2026-09-30
+平均标题字数 | 11.4 | 字 | 美妆个护 全量 SKU
+其他品类平均标题字数 | 21.8 | 字 | 对比组
+平均主图数量 | 1.25 | 张 | 美妆个护 全量 SKU
+其他品类平均主图数量 | 4.81 | 张 | 对比组
+属性填充率 | 36.3 | % | 美妆个护 全量 SKU
+其他品类属性填充率 | 87 | % | 对比组
+点击到下单转化率 | 1.14 | % | 异常期 2026-09-16 ~ 2026-09-30
+点击到下单转化率变化 | -56.98 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+
+-- 模块3 证据列表 --
+1 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 服饰鞋包；base_ctr_pct = 5.51；anomaly_ctr_pct = 5.45；anomaly_exposure = 530284.0
+2 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 家居日用；base_ctr_pct = 5.48；anomaly_ctr_pct = 5.52；anomaly_exposure = 524072.0
+3 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 数码配件；base_ctr_pct = 5.47；anomaly_ctr_pct = 5.45；anomaly_exposure = 519743.0
+4 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 食品生鲜；base_ctr_pct = 5.43；anomaly_ctr_pct = 5.49；anomaly_exposure = 519899.0
+5 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 美妆个护；base_ctr_pct = 4.2；anomaly_ctr_pct = 2.09；anomaly_exposure = 522429.0
+6 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 美妆个护；sku_cnt = 12；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill_rate = 36.3
+7 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 服饰鞋包；sku_cnt = 12；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill_rate = 87.7
+8 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 食品生鲜；sku_cnt = 12；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill_rate = 88.4
+9 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 家居日用；sku_cnt = 12；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill_rate = 86.3
+10 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 数码配件；sku_cnt = 12；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill_rate = 85.6
+11 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 氨基酸洁面；base_search = 50017.0；base_zero = 4448.0；anomaly_search = 53199.0；anomaly_zero = 17495.0
+12 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 玻尿酸精华；base_search = 50690.0；base_zero = 4546.0；anomaly_search = 51066.0；anomaly_zero = 17165.0
+13 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 神经酰胺；base_search = 53249.0；base_zero = 4475.0；anomaly_search = 54537.0；anomaly_zero = 16637.0
+14 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 视黄醇眼霜；base_search = 53014.0；base_zero = 2077.0；anomaly_search = 50876.0；anomaly_zero = 2943.0
+15 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 水杨酸洁面；base_search = 53855.0；base_zero = 2032.0；anomaly_search = 52423.0；anomaly_zero = 2875.0
+16 | 点击到下单转化率（biz_product_conversion） | database | conf=0.88 | metric=点击下单转化率 | 基准期点击下单转化率 2.65%，异常期 1.14%，相对变化 -56.98%
+17 | 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+18 | 用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+19 | 用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+20 | 用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+21 | 用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+22 | 点击到下单转化率（biz_product_conversion） | database | conf=0.88 | metric=点击下单转化率 | anomaly_click_to_order_pct = 1.14；base_click_to_order_pct = 2.65
+23 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+24 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+25 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+26 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+27 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+
+-- 模块4 结论 --
+归因结论：美妆个护品类曝光点击率下滑 50.24%，由 4.2% 降至 2.09%，属于**品类级商品呈现问题**，而非流量总量问题（同期其他品类 CTR 稳定在 5.45%~5.52%）。
+
+具体证据支持以下三条主因：
+
+- 标题过短：平均 11.4 字，显著低于其他品类的 21.8 字，关键词覆盖不足，搜索匹配度下降
+- 主图数量不足：平均 1.25 张，其他品类为 4.81 张，缺少多角度/场景图，首屏吸引力弱
+- 属性填充率偏低：36.3% 对比其他品类 87.0%，筛选与推荐场景下大量商品无法被召回
+- 高意图搜索词承接失败：「氨基酸洁面」零结果次数由 4448 次升至 17495 次（放大 3.93 倍）；「玻尿酸精华」零结果次数由 4546 次升至 17165 次（放大 3.78 倍）；「神经酰胺」零结果次数由 4475 次升至 16637 次（放大 3.72 倍）
+- 转化同步走弱：点击到下单转化率由 2.65% 降至 1.14%（-56.98%），说明进来的流量质量也随之下滑
+
+因果链条：目录信息缺失（标题短 / 主图少 / 属性空）→ 搜索与推荐召回不足 + 商品卡吸引力下降→ 曝光点击率由 4.2% 跌至 2.09% → 点击下单转化率同步下降 56.98%。
+
+-- 模块5 待补充数据 --
+本次分析已覆盖曝光、点击、转化、搜索、评论五类数据。仍存在以下数据缺口：
+- 缺少商品卡改版/主图下架的操作日志，无法确认变更发生的准确时点
+- 缺少竞品同品类价格与促销力度数据，无法完全排除外部竞争因素
+- 缺少站内推荐流与搜索流的分渠道曝光拆分，两条流量的贡献占比未量化
+
+-- 模块6 下一步建议 --
+- **紧急（24 小时内）**：筛出 美妆个护 品类中标题字数 < 15 字或主图 < 3 张的 SKU，按曝光量降序优先补齐，预计可恢复 30% 以上的 CTR 损失；
+- **本周内**：为「氨基酸洁面」等高意图零结果词建立兜底词表与召回规则，先止血再优化；
+- **本周内**：把属性填充率纳入商品上架卡点（低于 80% 不允许上架），并批量补齐存量 SKU；
+- **持续**：为该品类建立 CTR 日监控看板，跌幅超过 15% 自动告警，避免同类问题再次潜伏。
+
+result_file_path: exports/2/28/分析报告_任务40_20261008_193056.md
+created_at: 2026-10-08T19:30:56
+module_sizes: {"problem_definition_chars": 174, "key_metrics_count": 12, "evidence_list_count": 27, "conclusion_text_chars": 549, "missing_data_text_chars": 137, "next_action_text_chars": 236, "result_markdown_chars": 6732}
+
+====================================================================================================
+### scenario_2.json
+提问: 信息流渠道 ROAS 从 5.9 掉到 1.6，投放预算没变，问题出在哪？
+conv=29 task=41 status=success result_id=41 poll=0.52s
+完成日志: 任务完成：场景「渠道投放效率归因」，指标 13 项，证据 23 条，耗时 411ms
+路由日志: 场景路由|market|渠道投放效率归因|turn=2
+路由得分: 场景路由得分：[{'key': 'market', 'name': '渠道投放效率归因', 'score': 11}, {'key': 'catalog', 'name': '商品目录质量归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=否
+
+-- 工具调用链 --
+1 | db_query | success | 5ms | rows=6 | SELECT ch.channel_name, ch.channel_type, ROUND(SUM(CASE WHEN d.stat_date BETWEEN '2026-09-01' AND '2026-09-15'…
+    summary: 返回 6 行数据，字段 channel_name, channel_type, base_spend, anomaly_spend, base_roas, anomaly_roas。示例：channel_name=社媒-信息流；channel_type=social；base_spend=449060.75；anomaly_spend=461314.63；base_roas=5.92；anomaly_roas=1.58
+2 | db_query | success | 4ms | rows=6 | SELECT ch.channel_name, ROUND(100 * SUM(CASE WHEN d.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN d.cli…
+    summary: 返回 6 行数据，字段 channel_name, base_ctr_pct, anomaly_ctr_pct, base_cpc, anomaly_cpc, base_cac。示例：channel_name=社媒-信息流；base_ctr_pct=1.607；anomaly_ctr_pct=0.861；base_cpc=1.55；anomaly_cpc=3.01；base_cac=28.24
+3 | db_query | success | 2ms | rows=6 | SELECT ch.channel_name, SUM(CASE WHEN s.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN s.order_cnt ELSE …
+    summary: 返回 6 行数据，字段 channel_name, base_order_cnt, anomaly_order_cnt, base_gmv, anomaly_gmv, anomaly_refund_amount。示例：channel_name=社媒-信息流；base_order_cnt=5391.0；anomaly_order_cnt=1501.0；base_gmv=2659333.65；anomaly_gmv=728331.75；anomaly_refund_amount=58268.17
+4 | text_search | success | 2ms | rows=3(命中) | keyword=ROAS scope=knowledge limit=5
+    summary: 关键词「ROAS」命中 3 处（knowledge 3 条）。首条来自 知识库/01_归因分析方法论.md：成可控因子。 - GMV = 流量 × 转化率 × 客单价 - 曝光转化链：曝光 → 点击（CTR）→ 加购 → 下单（CVR）→ 支付 - ROAS = 渠道
+5 | file_write | success | 6ms | rows=- | file_name=分渠道ROAS对比.csv format=table content=@前序步骤
+    summary: 已写出中间产物 分渠道ROAS对比_20261008_193057.csv（322 B）到工作区
+6 | result_generate | success | 0ms | rows=- | scene=market metrics=13 evidence=23
+    summary: 已生成标准报告：关键指标 13 项、证据 23 条、结论 493 字
+
+-- 导出字节 --
+md: status=200 bytes=13271 ct=text/markdown; charset=utf-8
+json: status=200 bytes=15761 ct=application/json; charset=utf-8
+xlsx: status=200 bytes=11099 ct=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+-- 模块1 问题定义 --
+针对「信息流渠道 ROAS 从 5.9 掉到 1.6，投放预算没变，问题出在哪？」，先把问题界定为可验证的量化问题：
+渠道「社媒-信息流」的投放回报率 ROAS 在异常期（2026-09-16 ~ 2026-09-30）由 5.92 下滑至 1.58（相对变化 -73.31%），而同期投放花费仅变化 2.73%（44.91 万元 → 46.13 万元）。因此问题不是「预算被砍」，而是「同样的钱买不到同样的成交」。
+
+-- 模块2 关键指标 --
+社媒-信息流 ROAS | 1.58 | 倍 | 异常期 2026-09-16 ~ 2026-09-30
+社媒-信息流 ROAS（基准） | 5.92 | 倍 | 基准期 2026-09-01 ~ 2026-09-15
+ROAS 相对变化 | -73.31 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+投放花费变化 | 2.73 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+异常期投放花费 | 461,314.63 | 元 | 异常期 2026-09-16 ~ 2026-09-30
+渠道点击率 | 0.86 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+渠道点击率（基准） | 1.61 | % | 基准期 2026-09-01 ~ 2026-09-15
+单次点击成本 CPC | 3.01 | 元 | 异常期 2026-09-16 ~ 2026-09-30
+单次点击成本 CPC（基准） | 1.55 | 元 | 基准期 2026-09-01 ~ 2026-09-15
+新客获取成本 CAC | 191.42 | 元 | 异常期 2026-09-16 ~ 2026-09-30
+新客获取成本 CAC（基准） | 28.24 | 元 | 基准期 2026-09-01 ~ 2026-09-15
+渠道 GMV | 728,331.75 | 元 | 异常期 2026-09-16 ~ 2026-09-30
+其他渠道 ROAS 区间 | 6.77~105.51 | 倍 | 异常期 2026-09-16 ~ 2026-09-30
+
+-- 模块3 证据列表 --
+1 | 分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary） | database | conf=0.96 | metric=渠道 ROAS | channel_name = 社媒-信息流；channel_type = social；base_spend = 449060.75；anomaly_spend = 461314.63；base_roas = 5.92；anomaly_roas = 1.58
+2 | 分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary） | database | conf=0.96 | metric=渠道 ROAS | channel_name = 内容-种草；channel_type = content；base_spend = 271985.94；anomaly_spend = 284646.67；base_roas = 7.85；anomaly_roas = 6.77
+3 | 分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary） | database | conf=0.96 | metric=渠道 ROAS | channel_name = 搜索-品类词；channel_type = search；base_spend = 168237.04；anomaly_spend = 175937.93；base_roas = 10.3；anomaly_roas = 9.62
+4 | 分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary） | database | conf=0.96 | metric=渠道 ROAS | channel_name = 搜索-品牌词；channel_type = search；base_spend = 184857.82；anomaly_spend = 175039.89；base_roas = 14.01；anomaly_roas = 10.96
+5 | 分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary） | database | conf=0.96 | metric=渠道 ROAS | channel_name = 联盟-CPS；channel_type = alliance；base_spend = 70632.96；anomaly_spend = 67654.44；base_roas = 14.5；anomaly_roas = 13.66
+6 | 分渠道 ROAS 与花费对比（biz_ad_delivery + biz_sales_summary） | database | conf=0.96 | metric=渠道 ROAS | channel_name = 直访；channel_type = direct；base_spend = 12253.08；anomaly_spend = 10316.68；base_roas = 83.53；anomaly_roas = 105.51
+7 | 渠道流量效率指标（biz_ad_delivery） | database | conf=0.93 | metric=点击率 / CPC / CAC | channel_name = 社媒-信息流；base_ctr_pct = 1.607；anomaly_ctr_pct = 0.861；base_cpc = 1.55；anomaly_cpc = 3.01；base_cac = 28.24；anomaly_cac = 191.42
+8 | 渠道流量效率指标（biz_ad_delivery） | database | conf=0.93 | metric=点击率 / CPC / CAC | channel_name = 内容-种草；base_ctr_pct = 2.726；anomaly_ctr_pct = 2.539；base_cpc = 1.84；anomaly_cpc = 2.12；base_cac = 47.83；anomaly_cac = 56.93
+9 | 渠道流量效率指标（biz_ad_delivery） | database | conf=0.93 | metric=点击率 / CPC / CAC | channel_name = 搜索-品类词；base_ctr_pct = 3.414；anomaly_ctr_pct = 3.486；base_cpc = 1.45；anomaly_cpc = 1.54；base_cac = 36.31；anomaly_cac = 43.96
+10 | 渠道流量效率指标（biz_ad_delivery） | database | conf=0.93 | metric=点击率 / CPC / CAC | channel_name = 搜索-品牌词；base_ctr_pct = 3.472；anomaly_ctr_pct = 3.375；base_cpc = 1.63；anomaly_cpc = 1.55；base_cac = 43.2；anomaly_cac = 43.61
+11 | 渠道流量效率指标（biz_ad_delivery） | database | conf=0.93 | metric=点击率 / CPC / CAC | channel_name = 联盟-CPS；base_ctr_pct = 4.01；anomaly_ctr_pct = 3.742；base_cpc = 1.02；anomaly_cpc = 1.05；base_cac = 25.68；anomaly_cac = 29.75
+12 | 渠道成交与退款（biz_sales_summary） | database | conf=0.9 | metric=渠道 GMV / 退款额 | channel_name = 社媒-信息流；base_order_cnt = 5391.0；anomaly_order_cnt = 1501.0；base_gmv = 2659333.65；anomaly_gmv = 728331.75；anomaly_refund_amount = 58268.17
+13 | 渠道成交与退款（biz_sales_summary） | database | conf=0.9 | metric=渠道 GMV / 退款额 | channel_name = 联盟-CPS；base_order_cnt = 2084.0；anomaly_order_cnt = 1868.0；base_gmv = 1024500.32；anomaly_gmv = 923989.52；anomaly_refund_amount = 63502.78
+14 | 渠道成交与退款（biz_sales_summary） | database | conf=0.9 | metric=渠道 GMV / 退款额 | channel_name = 直访；base_order_cnt = 2069.0；anomaly_order_cnt = 2188.0；base_gmv = 1023491.98；anomaly_gmv = 1088507.01；anomaly_refund_amount = 85831.72
+15 | 渠道成交与退款（biz_sales_summary） | database | conf=0.9 | metric=渠道 GMV / 退款额 | channel_name = 搜索-品类词；base_order_cnt = 3520.0；anomaly_order_cnt = 3432.0；base_gmv = 1732543.58；anomaly_gmv = 1692884.55；anomaly_refund_amount = 133262.01
+16 | 渠道成交与退款（biz_sales_summary） | database | conf=0.9 | metric=渠道 GMV / 退款额 | channel_name = 搜索-品牌词；base_order_cnt = 5237.0；anomaly_order_cnt = 3940.0；base_gmv = 2590680.92；anomaly_gmv = 1917945.61；anomaly_refund_amount = 142993.44
+17 | 渠道 ROAS 变化结论 | database | conf=0.95 | metric=渠道 GMV | 花费 44.91 万元 → 46.13 万元（+2.73%），GMV 265.93 万元 → 72.83 万元（-72.61%），ROAS 5.92 → 1.58（-73.31%）。花费基本持平而 GMV 大幅下降，说明问题出在流量质量与转化效率，不是预算规模。
+18 | 知识库/01_归因分析方法论.md | knowledge | conf=0.8 | metric=分析方法论 | 成可控因子。 - GMV = 流量 × 转化率 × 客单价 - 曝光转化链：曝光 → 点击（CTR）→ 加购 → 下单（CVR）→ 支付 - ROAS = 渠道 GMV ÷ 渠道投放花费 3. **定位异常**：对每个因子做「基准期 vs 异常期」对比，找出变化最大的那一层。 归因的关键是**对
+19 | 知识库/02_电商核心指标口径.md | knowledge | conf=0.8 | metric=分析方法论 | V | GMV ÷ 订单数 | 反映「货品结构」 | ## 二、投放效率 | 指标 | 公式 | 健康参考 | | --- | --- | --- | | ROAS | 渠道成交额 ÷ 渠道花费 | 美妆类目 ≥ 3.0 | | CPC | 花费 ÷ 点击量 | 越低越好，但需结合质量 | | CPM | 花费 ÷
+20 | 知识库/05_用户口碑与退款诊断.md | knowledge | conf=0.8 | metric=分析方法论 | 、退款率上升的连带影响 退款不只是损失一笔收入，它会连锁触发： 1. 店铺权重下降（平台算法惩罚退款率高的店铺） 2. 自然流量减少 → 流量成本上升 → ROAS 恶化 3. 库存二次损失（退货商品可能需要折价处理） 4. 售后人力成本上升 → 平均处理时长增加 → 二次投诉 因此退款率是**不能拖的指标**，
+21 | 知识库方法论检索 | database | conf=0.8 | metric=分析方法论 | source_type = knowledge；source_name = 知识库/01_归因分析方法论.md；snippet = 成可控因子。 - GMV = 流量 × 转化率 × 客单价 - 曝光转化链：曝光 → 点击（CTR）→ 加购 → 下单（CVR）→ 支付 - ROAS = 渠道 GMV ÷ 渠道投放花费 3. **定位异常**：对每个因子做「基准期 vs 异常期」对比，找出变化最大的那一层。 归因的关键是**对
+22 | 知识库方法论检索 | database | conf=0.8 | metric=分析方法论 | source_type = knowledge；source_name = 知识库/02_电商核心指标口径.md；snippet = V | GMV ÷ 订单数 | 反映「货品结构」 | ## 二、投放效率 | 指标 | 公式 | 健康参考 | | --- | --- | --- | | ROAS | 渠道成交额 ÷ 渠道花费 | 美妆类目 ≥ 3.0 | | CPC | 花费 ÷ 点击量 | 越低越好，但需结合质量 | | CPM | 花费 ÷
+23 | 知识库方法论检索 | database | conf=0.8 | metric=分析方法论 | source_type = knowledge；source_name = 知识库/05_用户口碑与退款诊断.md；snippet = 、退款率上升的连带影响 退款不只是损失一笔收入，它会连锁触发： 1. 店铺权重下降（平台算法惩罚退款率高的店铺） 2. 自然流量减少 → 流量成本上升 → ROAS 恶化 3. 库存二次损失（退货商品可能需要折价处理） 4. 售后人力成本上升 → 平均处理时长增加 → 二次投诉 因此退款率是**不能拖的指标**，
+
+-- 模块4 结论 --
+归因结论：渠道「社媒-信息流」的投放效率恶化是**流量质量与素材效率问题**，不是预算问题。花费仅变化 +2.73%，但 ROAS 从 5.92 跌到 1.58（-73.31%）；同期其他渠道 ROAS 仍在 6.77~105.51 的正常区间，说明平台整体流量没有系统性贬值，问题集中在单一渠道的投放执行。
+
+具体证据支持以下判断：
+
+- 点击率下滑：1.607% → 0.861%（-46.42%），素材吸引力下降或人群定向漂移
+- 点击成本上升：CPC 1.55 元 → 3.01 元（+94.19%），竞价环境或定向竞争加剧
+- 获客成本上升：CAC 28.24 元 → 191.42 元（+577.83%），新客质量下降明显
+- 成交规模下滑：GMV 265.93 万元 → 72.83 万元（-72.61%）
+
+因果链条：素材老化 / 定向漂移 → 点击率 1.607% 降至 0.861%、CPC 升至 3.01 元 → 单客获取成本由 28.24 元升至 191.42 元 → 同样花费换来的 GMV 由 265.93 万元 降至 72.83 万元 → ROAS 崩塌。
+
+-- 模块5 待补充数据 --
+以下数据缺口会限制结论的精度：
+- 缺少分广告计划的素材维度数据（素材上线时间、素材版本、投放人群包），无法定位到具体素材
+- 缺少竞品同期投放强度数据，无法量化竞价环境变化的影响权重
+- 缺少「社媒-信息流」渠道的落地页转化率埋点，无法区分「点击进来了不买」与「根本没点进来」
+
+-- 模块6 下一步建议 --
+- **紧急（24 小时内）**：暂停「社媒-信息流」中 CPA 高于 191 元且近 7 日无转化的广告计划，先止住无效消耗（按当前效率测算，可减少约 15% 的浪费花费）；
+- **3 天内**：对该渠道做素材疲劳度排查，替换点击率低于渠道均值 70% 的素材，并重启 2~3 组历史高点击素材做 A/B 对照；
+- **3 天内**：复核定向人群包，比对基准期的高价值人群与当前投放人群的重合度，重合度低于 60% 需重建人群包；
+- **一周内**：为该渠道设置 ROAS 熔断线（低于 2.96 自动降预算 30% 并告警），避免再次出现「花了半个月才发现 ROI 已经腰斩」；
+- **持续**：把 ROAS、CPC、CAC 三项指标纳入渠道日报，与 GMV 同屏监控。
+
+result_file_path: exports/2/29/分析报告_任务41_20261008_193057.md
+created_at: 2026-10-08T19:30:57
+module_sizes: {"problem_definition_chars": 208, "key_metrics_count": 13, "evidence_list_count": 23, "conclusion_text_chars": 493, "missing_data_text_chars": 139, "next_action_text_chars": 341, "result_markdown_chars": 7889}
+
+====================================================================================================
+### scenario_3.json
+提问: 用户主要在抱怨什么？差评有没有集中爆发的点？
+conv=30 task=42 status=success result_id=42 poll=0.52s
+完成日志: 任务完成：场景「用户反馈与口碑归因」，指标 10 项，证据 24 条，耗时 342ms
+路由日志: 场景路由|feedback|用户反馈与口碑归因|turn=2
+路由得分: 场景路由得分：[{'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 3}, {'key': 'catalog', 'name': '商品目录质量归因', 'score': 0}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=否
+
+-- 工具调用链 --
+1 | db_query | success | 4ms | rows=3 | SELECT sentiment, SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN 1 ELSE 0 END) AS base_cnt…
+    summary: 返回 3 行数据，字段 sentiment, base_cnt, anomaly_cnt。示例：sentiment=positive；base_cnt=517.0；anomaly_cnt=551.0
+2 | db_query | success | 2ms | rows=4 | SELECT issue_tag, SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN 1 ELSE 0 END) AS base_cnt…
+    summary: 返回 4 行数据，字段 issue_tag, base_cnt, anomaly_cnt。示例：issue_tag=质量问题；base_cnt=27.0；anomaly_cnt=41.0
+3 | db_query | success | 14ms | rows=5 | SELECT p.category_id, SUM(CASE WHEN r.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN r.rating_1_cnt ELSE…
+    summary: 返回 5 行数据，字段 category_id, base_r1, base_r2, base_r5, anomaly_r1, anomaly_r2。示例：category_id=C01；base_r1=960.0；base_r2=1071.0；base_r5=20556.0；anomaly_r1=4344.0；anomaly_r2=3064.0
+4 | text_search | success | 1ms | rows=10(命中) | keyword=质量问题 scope=review limit=10
+    summary: 关键词「质量问题」命中 10 处（database 10 条）。首条来自 用户评论 #RV0001400（商品 P0030，情绪 negative，标签 质量问题）：质地和专柜买的完全不一样，怀疑是假货，联系客服也没给说法
+5 | file_write | success | 5ms | rows=- | file_name=差评标签分布.csv format=table content=@前序步骤
+    summary: 已写出中间产物 差评标签分布_20261008_193058.csv（100 B）到工作区
+6 | result_generate | success | 0ms | rows=- | scene=feedback metrics=10 evidence=24
+    summary: 已生成标准报告：关键指标 10 项、证据 24 条、结论 403 字
+
+-- 导出字节 --
+md: status=200 bytes=10781 ct=text/markdown; charset=utf-8
+json: status=200 bytes=13031 ct=application/json; charset=utf-8
+xlsx: status=200 bytes=9863 ct=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+-- 模块1 问题定义 --
+针对「用户主要在抱怨什么？差评有没有集中爆发的点？」，先量化问题：
+异常期（2026-09-16 ~ 2026-09-30）负面评论占比由 11.57% 升至 14.92%（+28.99%），正面评论占比由 75.7% 降至 74.06%；差评标签首位为「质量问题」。
+
+-- 模块2 关键指标 --
+负面评论占比 | 14.92 | % | 异常期 2026-09-16 ~ 2026-09-30
+负面评论占比（基准） | 11.57 | % | 基准期 2026-09-01 ~ 2026-09-15
+负面占比变化 | 28.99 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+正面评论占比 | 74.06 | % | 异常期 2026-09-16 ~ 2026-09-30
+正面占比变化 | -2.16 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+首位差评标签「质量问题」 | 41 | 条 | 异常期 2026-09-16 ~ 2026-09-30
+评分最低品类「C01」平均评分 | 3.04 | 分 | 异常期 2026-09-16 ~ 2026-09-30
+评分最低品类「C01」平均评分（基准） | 4.42 | 分 | 基准期 2026-09-01 ~ 2026-09-15
+评分最低品类平均评分变化 | -1.38 | 分 | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+异常期评论总量 | 744 | 条 | 异常期 2026-09-16 ~ 2026-09-30
+
+-- 模块3 证据列表 --
+1 | 评论情绪分布（biz_review） | database | conf=0.95 | metric=负面评论占比 | sentiment = positive；base_cnt = 517.0；anomaly_cnt = 551.0
+2 | 评论情绪分布（biz_review） | database | conf=0.95 | metric=负面评论占比 | sentiment = negative；base_cnt = 79.0；anomaly_cnt = 111.0
+3 | 评论情绪分布（biz_review） | database | conf=0.95 | metric=负面评论占比 | sentiment = neutral；base_cnt = 87.0；anomaly_cnt = 82.0
+4 | 差评标签分布（biz_review.issue_tag） | database | conf=0.93 | metric=负面标签占比 | issue_tag = 质量问题；base_cnt = 27.0；anomaly_cnt = 41.0
+5 | 差评标签分布（biz_review.issue_tag） | database | conf=0.93 | metric=负面标签占比 | issue_tag = 物流问题；base_cnt = 17.0；anomaly_cnt = 28.0
+6 | 差评标签分布（biz_review.issue_tag） | database | conf=0.93 | metric=负面标签占比 | issue_tag = 描述不符；base_cnt = 14.0；anomaly_cnt = 25.0
+7 | 差评标签分布（biz_review.issue_tag） | database | conf=0.93 | metric=负面标签占比 | issue_tag = 客服问题；base_cnt = 21.0；anomaly_cnt = 17.0
+8 | 评分分布（biz_rating） | database | conf=0.92 | metric=平均评分 | category_id = C01；base_r1 = 960.0；base_r2 = 1071.0；base_r5 = 20556.0；anomaly_r1 = 4344.0；anomaly_r2 = 3064.0；anomaly_r5 = 4781.0；base_avg_rating = 4.422；anomaly_avg_rating = 3.041
+9 | 评分分布（biz_rating） | database | conf=0.92 | metric=平均评分 | category_id = C03；base_r1 = 836.0；base_r2 = 1104.0；base_r5 = 20746.0；anomaly_r1 = 894.0；anomaly_r2 = 1110.0；anomaly_r5 = 20548.0；base_avg_rating = 4.435；anomaly_avg_rating = 4.424
+10 | 评分分布（biz_rating） | database | conf=0.92 | metric=平均评分 | category_id = C02；base_r1 = 883.0；base_r2 = 1101.0；base_r5 = 20792.0；anomaly_r1 = 908.0；anomaly_r2 = 1112.0；anomaly_r5 = 20657.0；base_avg_rating = 4.433；anomaly_avg_rating = 4.425
+11 | 评分分布（biz_rating） | database | conf=0.92 | metric=平均评分 | category_id = C05；base_r1 = 904.0；base_r2 = 1057.0；base_r5 = 20956.0；anomaly_r1 = 915.0；anomaly_r2 = 1100.0；anomaly_r5 = 20733.0；base_avg_rating = 4.439；anomaly_avg_rating = 4.428
+12 | 评分分布（biz_rating） | database | conf=0.92 | metric=平均评分 | category_id = C04；base_r1 = 897.0；base_r2 = 1112.0；base_r5 = 20807.0；anomaly_r1 = 833.0；anomaly_r2 = 1100.0；anomaly_r5 = 20863.0；base_avg_rating = 4.429；anomaly_avg_rating = 4.436
+13 | 情绪结构变化结论 | database | conf=0.95 | metric=负面评论占比 | 基准期负面 79 条 / 共 683 条（11.57%），异常期负面 111 条 / 共 744 条（14.92%），负面比例接近翻倍，且增幅远超评论总量增幅，说明不是「评论变多」而是「不满变多」。
+14 | 用户评论 #RV0001400（商品 P0030，情绪 negative，标签 质量问题） | database | conf=0.88 | metric=负面标签占比 | 质地和专柜买的完全不一样，怀疑是假货，联系客服也没给说法
+15 | 用户评论 #RV0001388（商品 P0018，情绪 negative，标签 质量问题） | database | conf=0.88 | metric=负面标签占比 | 用了三天脸颊泛红起皮，成分表里酒精排第二，敏感肌慎入
+16 | 用户评论 #RV0001376（商品 P0002，情绪 negative，标签 质量问题） | database | conf=0.88 | metric=负面标签占比 | 收到货发现瓶身有划痕，膏体也有分层，明显是临期或者存储不当
+17 | 用户评论 #RV0001367（商品 P0053，情绪 negative，标签 质量问题） | database | conf=0.88 | metric=负面标签占比 | 用了三天脸颊泛红起皮，成分表里酒精排第二，敏感肌慎入
+18 | 用户评论 #RV0001350（商品 P0022，情绪 negative，标签 质量问题） | database | conf=0.88 | metric=负面标签占比 | 用了三天脸颊泛红起皮，成分表里酒精排第二，敏感肌慎入
+19 | 用户评论 #RV0001343（商品 P0016，情绪 negative，标签 质量问题） | database | conf=0.88 | metric=负面标签占比 | 质地和专柜买的完全不一样，怀疑是假货，联系客服也没给说法
+20 | 用户评论原声 | database | conf=0.88 | metric=负面标签占比 | source_type = database；source_name = 用户评论 #RV0001400（商品 P0030，情绪 negative，标签 质量问题）；snippet = 质地和专柜买的完全不一样，怀疑是假货，联系客服也没给说法
+21 | 用户评论原声 | database | conf=0.88 | metric=负面标签占比 | source_type = database；source_name = 用户评论 #RV0001388（商品 P0018，情绪 negative，标签 质量问题）；snippet = 用了三天脸颊泛红起皮，成分表里酒精排第二，敏感肌慎入
+22 | 用户评论原声 | database | conf=0.88 | metric=负面标签占比 | source_type = database；source_name = 用户评论 #RV0001376（商品 P0002，情绪 negative，标签 质量问题）；snippet = 收到货发现瓶身有划痕，膏体也有分层，明显是临期或者存储不当
+23 | 用户评论原声 | database | conf=0.88 | metric=负面标签占比 | source_type = database；source_name = 用户评论 #RV0001367（商品 P0053，情绪 negative，标签 质量问题）；snippet = 用了三天脸颊泛红起皮，成分表里酒精排第二，敏感肌慎入
+24 | 用户评论原声 | database | conf=0.88 | metric=负面标签占比 | source_type = database；source_name = 用户评论 #RV0001350（商品 P0022，情绪 negative，标签 质量问题）；snippet = 用了三天脸颊泛红起皮，成分表里酒精排第二，敏感肌慎入
+
+-- 模块4 结论 --
+归因结论：口碑恶化不是「用户变挑剔」，而是**商品实际表现与用户预期存在落差**。负面评论占比由 11.57% 升至 14.92%，差评标签高度集中在「质量问题」，首位标签「质量问题」41 条，是次位「物流问题」28 条的 1.5 倍，标签结构呈单点爆发而非全面扩散——这正是「某类问题集中爆发」的典型特征，而不是服务体验整体下滑。
+
+标签变化明细：
+
+- 「质量问题」27 条 → 41 条（+51.85%）
+- 「物流问题」17 条 → 28 条（+64.71%）
+- 「描述不符」14 条 → 25 条（+78.57%）
+- 「客服问题」21 条 → 17 条（-19.05%）
+
+评分同步走弱：评分最低的品类「C01」平均评分由 4.422 分降至 3.041 分（-1.381 分）。
+
+因果链条：用户对「质量问题」的预期落空 → 差评集中爆发于该标签 → 口碑走弱并拖累后续转化，形成负向循环。
+
+-- 模块5 待补充数据 --
+以下数据缺口会限制结论精度：
+- 缺少评论关联的具体商品 ID 与订单号（本次为品类级聚合），无法直接定位到问题 SKU
+- 缺少客服工单数据，无法判断部分不满是否被客服环节拦截而未流入评论区
+- 缺少竞品同期口碑数据，无法判断是否存在行业性质量波动
+
+-- 模块6 下一步建议 --
+- **今天**：把「质量问题」标签下的差评逐条人工审阅（样本量 41 条），抽取前 20 条定位到具体商品；
+- **3 天内**：针对「质量问题」拉齐品控、仓储、客服三方口径，抽检该标签下的问题商品批次，确认是临期、存储还是来料问题，逐项整改；
+- **一周内**：建立「新品上架前 50 单人工回访」机制，在「质量问题」类问题大规模扩散前拦截；
+- **持续**：把负面评论占比与首位差评标签纳入每日口碑看板，负面占比超过 20.0% 即触发预警。
+
+result_file_path: exports/2/30/分析报告_任务42_20261008_193058.md
+created_at: 2026-10-08T19:30:58
+module_sizes: {"problem_definition_chars": 134, "key_metrics_count": 10, "evidence_list_count": 24, "conclusion_text_chars": 403, "missing_data_text_chars": 125, "next_action_text_chars": 227, "result_markdown_chars": 5922}
+
+====================================================================================================
+### scenario_4.json
+提问: 我的商品页转化率最近掉得厉害，帮我看看是什么原因？
+conv=31 task=43 status=success result_id=43 poll=0.52s
+完成日志: 任务完成：场景「商品目录质量归因」，指标 12 项，证据 27 条，耗时 406ms
+路由日志: 场景路由|catalog|商品目录质量归因|turn=2
+路由得分: 场景路由得分：[{'key': 'catalog', 'name': '商品目录质量归因', 'score': 2}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 1}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=否
+
+-- 工具调用链 --
+1 | db_query | success | 8ms | rows=5 | SELECT c.category_name, ROUND(100 * SUM(CASE WHEN pc.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN pc.c…
+    summary: 返回 5 行数据，字段 category_name, base_ctr_pct, anomaly_ctr_pct, anomaly_exposure。示例：category_name=服饰鞋包；base_ctr_pct=5.51；anomaly_ctr_pct=5.45；anomaly_exposure=530284.0
+2 | db_query | success | 1ms | rows=5 | SELECT c.category_name, COUNT(*) AS sku_cnt, ROUND(AVG(p.title_length), 1) AS avg_title_len, ROUND(AVG(p.image…
+    summary: 返回 5 行数据，字段 category_name, sku_cnt, avg_title_len, avg_image_cnt, avg_attr_fill_rate。示例：category_name=美妆个护；sku_cnt=12；avg_title_len=11.4；avg_image_cnt=1.25；avg_attr_fill_rate=36.3
+3 | db_query | success | 3ms | rows=6 | SELECT se.search_keyword, SUM(CASE WHEN se.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN se.search_cnt …
+    summary: 返回 6 行数据，字段 search_keyword, base_search, base_zero, anomaly_search, anomaly_zero。示例：search_keyword=氨基酸洁面；base_search=50017.0；base_zero=4448.0；anomaly_search=53199.0；anomaly_zero=17495.0
+4 | db_query | success | 4ms | rows=1 | SELECT ROUND(100 * SUM(CASE WHEN stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN order_cnt ELSE 0 END) / …
+    summary: 返回 1 行数据，字段 anomaly_click_to_order_pct, base_click_to_order_pct。示例：anomaly_click_to_order_pct=1.14；base_click_to_order_pct=2.65
+5 | text_search | success | 1ms | rows=8(命中) | keyword=描述不符 scope=review limit=8
+    summary: 关键词「描述不符」命中 8 处（database 8 条）。首条来自 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）：标题写保质期到 2028 年，收到的只有 2026 年 10 月
+6 | file_write | success | 5ms | rows=- | file_name=品类CTR对比.csv format=table content=@前序步骤
+    summary: 已写出中间产物 品类CTR对比_20261008_193059.csv（169 B）到工作区
+7 | result_generate | success | 0ms | rows=- | scene=catalog metrics=12 evidence=27
+    summary: 已生成标准报告：关键指标 12 项、证据 27 条、结论 549 字
+
+-- 导出字节 --
+md: status=200 bytes=11947 ct=text/markdown; charset=utf-8
+json: status=200 bytes=14556 ct=application/json; charset=utf-8
+xlsx: status=200 bytes=10318 ct=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+-- 模块1 问题定义 --
+用户在「我的商品页转化率最近掉得厉害，帮我看看是什么原因？」中反映的问题，经数据核对定位为：
+美妆个护品类的曝光点击率在异常期（2026-09-16 ~ 2026-09-30）由 4.2% 下滑至 2.09%，降幅 50.24%；同期其他品类 CTR 稳定在 5.45%~5.52%，说明不是全站流量问题，而是该品类的商品呈现问题。
+
+-- 模块2 关键指标 --
+美妆个护 曝光点击率 | 2.09 | % | 异常期 2026-09-16 ~ 2026-09-30
+美妆个护 曝光点击率（基准） | 4.2 | % | 基准期 2026-09-01 ~ 2026-09-15
+点击率变化幅度 | -50.24 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+其他品类 CTR 区间 | 5.45%~5.52% | % | 异常期 2026-09-16 ~ 2026-09-30
+平均标题字数 | 11.4 | 字 | 美妆个护 全量 SKU
+其他品类平均标题字数 | 21.8 | 字 | 对比组
+平均主图数量 | 1.25 | 张 | 美妆个护 全量 SKU
+其他品类平均主图数量 | 4.81 | 张 | 对比组
+属性填充率 | 36.3 | % | 美妆个护 全量 SKU
+其他品类属性填充率 | 87 | % | 对比组
+点击到下单转化率 | 1.14 | % | 异常期 2026-09-16 ~ 2026-09-30
+点击到下单转化率变化 | -56.98 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+
+-- 模块3 证据列表 --
+1 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 服饰鞋包；base_ctr_pct = 5.51；anomaly_ctr_pct = 5.45；anomaly_exposure = 530284.0
+2 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 家居日用；base_ctr_pct = 5.48；anomaly_ctr_pct = 5.52；anomaly_exposure = 524072.0
+3 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 数码配件；base_ctr_pct = 5.47；anomaly_ctr_pct = 5.45；anomaly_exposure = 519743.0
+4 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 食品生鲜；base_ctr_pct = 5.43；anomaly_ctr_pct = 5.49；anomaly_exposure = 519899.0
+5 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 美妆个护；base_ctr_pct = 4.2；anomaly_ctr_pct = 2.09；anomaly_exposure = 522429.0
+6 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 美妆个护；sku_cnt = 12；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill_rate = 36.3
+7 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 服饰鞋包；sku_cnt = 12；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill_rate = 87.7
+8 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 食品生鲜；sku_cnt = 12；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill_rate = 88.4
+9 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 家居日用；sku_cnt = 12；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill_rate = 86.3
+10 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 数码配件；sku_cnt = 12；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill_rate = 85.6
+11 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 氨基酸洁面；base_search = 50017.0；base_zero = 4448.0；anomaly_search = 53199.0；anomaly_zero = 17495.0
+12 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 玻尿酸精华；base_search = 50690.0；base_zero = 4546.0；anomaly_search = 51066.0；anomaly_zero = 17165.0
+13 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 神经酰胺；base_search = 53249.0；base_zero = 4475.0；anomaly_search = 54537.0；anomaly_zero = 16637.0
+14 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 视黄醇眼霜；base_search = 53014.0；base_zero = 2077.0；anomaly_search = 50876.0；anomaly_zero = 2943.0
+15 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 水杨酸洁面；base_search = 53855.0；base_zero = 2032.0；anomaly_search = 52423.0；anomaly_zero = 2875.0
+16 | 点击到下单转化率（biz_product_conversion） | database | conf=0.88 | metric=点击下单转化率 | 基准期点击下单转化率 2.65%，异常期 1.14%，相对变化 -56.98%
+17 | 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+18 | 用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+19 | 用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+20 | 用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+21 | 用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+22 | 点击到下单转化率（biz_product_conversion） | database | conf=0.88 | metric=点击下单转化率 | anomaly_click_to_order_pct = 1.14；base_click_to_order_pct = 2.65
+23 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+24 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+25 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+26 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+27 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+
+-- 模块4 结论 --
+归因结论：美妆个护品类曝光点击率下滑 50.24%，由 4.2% 降至 2.09%，属于**品类级商品呈现问题**，而非流量总量问题（同期其他品类 CTR 稳定在 5.45%~5.52%）。
+
+具体证据支持以下三条主因：
+
+- 标题过短：平均 11.4 字，显著低于其他品类的 21.8 字，关键词覆盖不足，搜索匹配度下降
+- 主图数量不足：平均 1.25 张，其他品类为 4.81 张，缺少多角度/场景图，首屏吸引力弱
+- 属性填充率偏低：36.3% 对比其他品类 87.0%，筛选与推荐场景下大量商品无法被召回
+- 高意图搜索词承接失败：「氨基酸洁面」零结果次数由 4448 次升至 17495 次（放大 3.93 倍）；「玻尿酸精华」零结果次数由 4546 次升至 17165 次（放大 3.78 倍）；「神经酰胺」零结果次数由 4475 次升至 16637 次（放大 3.72 倍）
+- 转化同步走弱：点击到下单转化率由 2.65% 降至 1.14%（-56.98%），说明进来的流量质量也随之下滑
+
+因果链条：目录信息缺失（标题短 / 主图少 / 属性空）→ 搜索与推荐召回不足 + 商品卡吸引力下降→ 曝光点击率由 4.2% 跌至 2.09% → 点击下单转化率同步下降 56.98%。
+
+-- 模块5 待补充数据 --
+本次分析已覆盖曝光、点击、转化、搜索、评论五类数据。仍存在以下数据缺口：
+- 缺少商品卡改版/主图下架的操作日志，无法确认变更发生的准确时点
+- 缺少竞品同品类价格与促销力度数据，无法完全排除外部竞争因素
+- 缺少站内推荐流与搜索流的分渠道曝光拆分，两条流量的贡献占比未量化
+
+-- 模块6 下一步建议 --
+- **紧急（24 小时内）**：筛出 美妆个护 品类中标题字数 < 15 字或主图 < 3 张的 SKU，按曝光量降序优先补齐，预计可恢复 30% 以上的 CTR 损失；
+- **本周内**：为「氨基酸洁面」等高意图零结果词建立兜底词表与召回规则，先止血再优化；
+- **本周内**：把属性填充率纳入商品上架卡点（低于 80% 不允许上架），并批量补齐存量 SKU；
+- **持续**：为该品类建立 CTR 日监控看板，跌幅超过 15% 自动告警，避免同类问题再次潜伏。
+
+result_file_path: exports/2/31/分析报告_任务43_20261008_193059.md
+created_at: 2026-10-08T19:30:59
+module_sizes: {"problem_definition_chars": 166, "key_metrics_count": 12, "evidence_list_count": 27, "conclusion_text_chars": 549, "missing_data_text_chars": 137, "next_action_text_chars": 236, "result_markdown_chars": 6716}
+
+====================================================================================================
+### scenario_5.json
+提问: 9 月下半月整体 GMV 环比下滑，是哪些因素导致的？
+conv=32 task=44 status=success result_id=44 poll=0.52s
+完成日志: 任务完成：场景「大盘经营下滑归因」，指标 20 项，证据 26 条，耗时 482ms
+路由日志: 场景路由|growth|大盘经营下滑归因|turn=2
+路由得分: 场景路由得分：[{'key': 'growth', 'name': '大盘经营下滑归因', 'score': 5}, {'key': 'catalog', 'name': '商品目录质量归因', 'score': 0}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=否
+
+-- 工具调用链 --
+1 | db_query | success | 1ms | rows=1 | SELECT ROUND(SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN gmv ELSE 0 END), 2) AS base_gm…
+    summary: 返回 1 行数据，字段 base_gmv, anomaly_gmv, base_order_cnt, anomaly_order_cnt, base_active_user, anomaly_active_user。示例：base_gmv=11165493.54；anomaly_gmv=8277863.44；base_order_cnt=22648.0；anomaly_order_cnt=16873.0；base_active_user=56294.0；anomaly_active_user=38766.0
+2 | db_query | success | 11ms | rows=1 | SELECT ROUND(SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN pv ELSE 0 END), 0) AS base_pv,…
+    summary: 返回 1 行数据，字段 base_pv, anomaly_pv, base_visit, anomaly_visit, base_avg_duration, anomaly_avg_duration。示例：base_pv=18045.0；anomaly_pv=17984.0；base_visit=3007.0；anomaly_visit=2975.0；base_avg_duration=339.9；anomaly_avg_duration=349.2
+3 | db_query | success | 9ms | rows=1 | SELECT ROUND(SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN add_cart_cnt ELSE 0 END), 0) A…
+    summary: 返回 1 行数据，字段 base_add_cart, anomaly_add_cart, base_abandon, anomaly_abandon, base_cart_amount, anomaly_cart_amount。示例：base_add_cart=1839.0；anomaly_add_cart=1753.0；base_abandon=1004.0；anomaly_abandon=1203.0；base_cart_amount=447490.61；anomaly_cart_amount=415838.83
+4 | db_query | success | 7ms | rows=1 | SELECT SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN click_cnt ELSE 0 END) AS base_click,…
+    summary: 返回 1 行数据，字段 base_click, anomaly_click, base_cart, anomaly_cart, base_order, anomaly_order。示例：base_click=136724.0；anomaly_click=125612.0；base_cart=7122.0；anomaly_cart=6276.0；base_order=3750.0；anomaly_order=3277.0
+5 | db_query | success | 2ms | rows=6 | SELECT ch.channel_name, ROUND(SUM(CASE WHEN s.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN s.gmv ELSE …
+    summary: 返回 6 行数据，字段 channel_name, base_gmv, anomaly_gmv, anomaly_order_cnt。示例：channel_name=社媒-信息流；base_gmv=2659333.65；anomaly_gmv=728331.75；anomaly_order_cnt=1501.0
+6 | db_query | success | 12ms | rows=5 | SELECT c.category_name, ROUND(SUM(CASE WHEN r.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN r.sale_amou…
+    summary: 返回 5 行数据，字段 category_name, base_amount, anomaly_amount, anomaly_qty。示例：category_name=食品生鲜；base_amount=1609502.2；anomaly_amount=1749613.9；anomaly_qty=16782.0
+7 | file_write | success | 5ms | rows=- | file_name=分渠道GMV变化.csv format=table content=@前序步骤
+    summary: 已写出中间产物 分渠道GMV变化_20261008_193059.csv（266 B）到工作区
+8 | result_generate | success | 0ms | rows=- | scene=growth metrics=20 evidence=26
+    summary: 已生成标准报告：关键指标 20 项、证据 26 条、结论 619 字
+
+-- 导出字节 --
+md: status=200 bytes=12661 ct=text/markdown; charset=utf-8
+json: status=200 bytes=16074 ct=application/json; charset=utf-8
+xlsx: status=200 bytes=10886 ct=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+-- 模块1 问题定义 --
+针对「9 月下半月整体 GMV 环比下滑，是哪些因素导致的？」，先把大盘问题拆成可归因的结构：
+异常期（2026-09-16 ~ 2026-09-30）GMV 由 1116.55 万元 降至 827.79 万元（-25.86%），订单量 22648 → 16873（-25.50%），客单价 493.00 元 → 490.60 元（-0.49%）。按「流量 × 转化率 × 客单价」三因子拆解，主导因子是 **流量（活跃用户数）**。
+
+-- 模块2 关键指标 --
+GMV | 8,277,863.44 | 元 | 异常期 2026-09-16 ~ 2026-09-30
+GMV（基准） | 11,165,493.54 | 元 | 基准期 2026-09-01 ~ 2026-09-15
+GMV 变化 | -25.86 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+订单量 | 16,873 | 单 | 异常期 2026-09-16 ~ 2026-09-30
+订单量变化 | -25.5 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+客单价 | 490.6 | 元 | 异常期 2026-09-16 ~ 2026-09-30
+客单价变化 | -0.49 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+访问次数 PV | 17,984 | 次 | 异常期 2026-09-16 ~ 2026-09-30
+PV 变化 | -0.34 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+活跃用户数 | 38,766 | 人 | 异常期 2026-09-16 ~ 2026-09-30
+活跃用户数变化 | -31.14 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+访问次数 | 2,975 | 次 | 异常期 2026-09-16 ~ 2026-09-30
+访问次数变化 | -1.06 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+下单转化率（下单/活跃用户） | 43.53 | % | 异常期 2026-09-16 ~ 2026-09-30
+下单转化率变化 | 8.19 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+购物车放弃率 | 68.63 | % | 异常期 2026-09-16 ~ 2026-09-30
+商品点击量（漏斗表） | 125,612 | 次 | 异常期 2026-09-16 ~ 2026-09-30
+商品点击量变化 | -8.13 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+失血渠道「社媒-信息流」GMV 变化 | -72.61 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+失血品类「服饰鞋包」销售额变化 | -3.99 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+
+-- 模块3 证据列表 --
+1 | 大盘经营总览（biz_sales_summary） | database | conf=0.96 | metric=GMV | base_gmv = 11165493.54；anomaly_gmv = 8277863.44；base_order_cnt = 22648.0；anomaly_order_cnt = 16873.0；base_active_user = 56294.0；anomaly_active_user = 38766.0；anomaly_refund_amount = 643120.01
+2 | 流量规模与深度（biz_visit_event） | database | conf=0.94 | metric=流量 PV | base_pv = 18045.0；anomaly_pv = 17984.0；base_visit = 3007.0；anomaly_visit = 2975.0；base_avg_duration = 339.9；anomaly_avg_duration = 349.2
+3 | 加购与放弃行为（biz_cart_event） | database | conf=0.92 | metric=购物车放弃率 | base_add_cart = 1839.0；anomaly_add_cart = 1753.0；base_abandon = 1004.0；anomaly_abandon = 1203.0；base_cart_amount = 447490.61；anomaly_cart_amount = 415838.83
+4 | 三因子拆解结论 | database | conf=0.94 | metric=GMV | GMV = 活跃用户 × 转化率 × 客单价，三因子同取 biz_sales_summary 单表口径：流量 -31.14% × 转化率 +8.19% × 客单价 -0.49% ⇒ 还原 GMV 变化 -25.87%（实际 -25.86%，尾差为四舍五入）。主导因子为流量（活跃用户数），说明本轮下滑的主要矛盾在用户规模端。
+5 | 分渠道 GMV 变化 | database | conf=0.93 | metric=渠道 GMV | channel_name = 社媒-信息流；base_gmv = 2659333.65；anomaly_gmv = 728331.75；anomaly_order_cnt = 1501.0
+6 | 分渠道 GMV 变化 | database | conf=0.93 | metric=渠道 GMV | channel_name = 联盟-CPS；base_gmv = 1024500.32；anomaly_gmv = 923989.52；anomaly_order_cnt = 1868.0
+7 | 分渠道 GMV 变化 | database | conf=0.93 | metric=渠道 GMV | channel_name = 直访；base_gmv = 1023491.98；anomaly_gmv = 1088507.01；anomaly_order_cnt = 2188.0
+8 | 分渠道 GMV 变化 | database | conf=0.93 | metric=渠道 GMV | channel_name = 搜索-品类词；base_gmv = 1732543.58；anomaly_gmv = 1692884.55；anomaly_order_cnt = 3432.0
+9 | 分渠道 GMV 变化 | database | conf=0.93 | metric=渠道 GMV | channel_name = 搜索-品牌词；base_gmv = 2590680.92；anomaly_gmv = 1917945.61；anomaly_order_cnt = 3940.0
+10 | 分渠道 GMV 变化 | database | conf=0.93 | metric=渠道 GMV | channel_name = 内容-种草；base_gmv = 2134943.09；anomaly_gmv = 1926205.0；anomaly_order_cnt = 3944.0
+11 | 分品类销售额变化 | database | conf=0.93 | metric=品类销售额 | category_name = 食品生鲜；base_amount = 1609502.2；anomaly_amount = 1749613.9；anomaly_qty = 16782.0
+12 | 分品类销售额变化 | database | conf=0.93 | metric=品类销售额 | category_name = 美妆个护；base_amount = 2214157.0；anomaly_amount = 2131392.0；anomaly_qty = 16648.0
+13 | 分品类销售额变化 | database | conf=0.93 | metric=品类销售额 | category_name = 数码配件；base_amount = 2463918.0；anomaly_amount = 2421755.0；anomaly_qty = 17595.0
+14 | 分品类销售额变化 | database | conf=0.93 | metric=品类销售额 | category_name = 家居日用；base_amount = 2870742.0；anomaly_amount = 2957109.0；anomaly_qty = 17501.0
+15 | 分品类销售额变化 | database | conf=0.93 | metric=品类销售额 | category_name = 服饰鞋包；base_amount = 3975752.0；anomaly_amount = 3817195.0；anomaly_qty = 16805.0
+16 | 下单漏斗（biz_product_conversion） | database | conf=0.93 | metric=下单转化率 | base_click = 136724.0；anomaly_click = 125612.0；base_cart = 7122.0；anomaly_cart = 6276.0；base_order = 3750.0；anomaly_order = 3277.0
+17 | 分渠道 GMV 变化（biz_sales_summary） | database | conf=0.93 | metric=渠道 GMV | channel_name = 社媒-信息流；base_gmv = 2659333.65；anomaly_gmv = 728331.75；anomaly_order_cnt = 1501.0
+18 | 分渠道 GMV 变化（biz_sales_summary） | database | conf=0.93 | metric=渠道 GMV | channel_name = 联盟-CPS；base_gmv = 1024500.32；anomaly_gmv = 923989.52；anomaly_order_cnt = 1868.0
+19 | 分渠道 GMV 变化（biz_sales_summary） | database | conf=0.93 | metric=渠道 GMV | channel_name = 直访；base_gmv = 1023491.98；anomaly_gmv = 1088507.01；anomaly_order_cnt = 2188.0
+20 | 分渠道 GMV 变化（biz_sales_summary） | database | conf=0.93 | metric=渠道 GMV | channel_name = 搜索-品类词；base_gmv = 1732543.58；anomaly_gmv = 1692884.55；anomaly_order_cnt = 3432.0
+21 | 分渠道 GMV 变化（biz_sales_summary） | database | conf=0.93 | metric=渠道 GMV | channel_name = 搜索-品牌词；base_gmv = 2590680.92；anomaly_gmv = 1917945.61；anomaly_order_cnt = 3940.0
+22 | 分品类销售额变化（biz_sales） | database | conf=0.93 | metric=品类销售额 | category_name = 食品生鲜；base_amount = 1609502.2；anomaly_amount = 1749613.9；anomaly_qty = 16782.0
+23 | 分品类销售额变化（biz_sales） | database | conf=0.93 | metric=品类销售额 | category_name = 美妆个护；base_amount = 2214157.0；anomaly_amount = 2131392.0；anomaly_qty = 16648.0
+24 | 分品类销售额变化（biz_sales） | database | conf=0.93 | metric=品类销售额 | category_name = 数码配件；base_amount = 2463918.0；anomaly_amount = 2421755.0；anomaly_qty = 17595.0
+25 | 分品类销售额变化（biz_sales） | database | conf=0.93 | metric=品类销售额 | category_name = 家居日用；base_amount = 2870742.0；anomaly_amount = 2957109.0；anomaly_qty = 17501.0
+26 | 分品类销售额变化（biz_sales） | database | conf=0.93 | metric=品类销售额 | category_name = 服饰鞋包；base_amount = 3975752.0；anomaly_amount = 3817195.0；anomaly_qty = 16805.0
+
+-- 模块4 结论 --
+归因结论：大盘 GMV 下滑 25.86%，三因子拆解后主导因子是 **流量（活跃用户数）**。
+
+三因子变化明细（同取 biz_sales_summary 单表口径）：
+
+- 流量（活跃用户数）：-31.14%
+- 转化率（下单/活跃用户）：+8.19%
+- 客单价：-0.49%
+
+校验：三因子相乘还原 GMV 变化 -25.87%，与实际 -25.86% 一致（尾差为四舍五入）。
+
+转化率与客单价中至少一项同步走弱，说明除规模因素外，承接端也存在问题。
+
+结构下钻：渠道维度「社媒-信息流」由 265.93 万元 降至 72.83 万元（-72.61%），绝对减量 193.10 万元，占整体 GMV 减量的 66.9%，是减量最大的渠道；品类维度（销售额口径）「服饰鞋包」由 397.58 万元 降至 381.72 万元（-3.99%），绝对减量 15.86 万元，是减量最大的品类。减量最大的两个渠道 「社媒-信息流」、「搜索-品牌词」 合计占整体减量的 90.2%，降幅高度集中，不属于全盘性流失。
+
+补充信号：购物车放弃率由 54.59% 变为 68.63%，放弃率上升，说明用户「想买但没买成」，需要重点检查价格、库存与结算体验。
+
+因果链条：用户规模收缩 → 订单量与 GMV 同步下滑；但降幅集中在 「社媒-信息流」、「搜索-品牌词」，且转化率与客单价基本持稳，说明这不是「全盘走弱」，而是可被定点修复的结构性问题。
+
+-- 模块5 待补充数据 --
+以下数据缺口会限制结论精度：
+- 本次三因子拆解只使用 biz_sales_summary（成交口径）：访问/点击等行为表与 biz_sales 品类明细表的统计覆盖范围都与成交汇总不同，跨表比率不可交叉相乘、明细合计也不等于大盘 GMV，故仅作下钻参考
+- 缺少分日粒度的大促/活动日历，无法剥离促销节奏造成的自然波动
+- 缺少新老客拆分（本次仅有活跃用户总数），无法判断是拉新乏力还是老客流失
+- 缺少竞品与本行业大盘数据，无法量化外部环境的影响权重
+
+-- 模块6 下一步建议 --
+- **今天**：对失血渠道「社媒-信息流」与失血品类「服饰鞋包」做专项复盘，确认是「主动调整」还是「异常流失」；
+- **3 天内**：若为异常流失，按归因链逐项排查——流量端查投放与自然搜索，转化端查价格带、库存与商详，货品端查上下架与缺货；
+- **一周内**：把「GMV = 流量 × 转化率 × 客单价」三因子看板固化为日报，任一因子环比波动超过 10% 自动归因提示；
+- **持续**：对每个渠道与品类设置 GMV 贡献占比的红线，单一渠道占比超过 40% 时启动分散化投放，降低单点依赖风险。
+
+result_file_path: exports/2/32/分析报告_任务44_20261008_193059.md
+created_at: 2026-10-08T19:30:59
+module_sizes: {"problem_definition_chars": 217, "key_metrics_count": 20, "evidence_list_count": 26, "conclusion_text_chars": 619, "missing_data_text_chars": 227, "next_action_text_chars": 254, "result_markdown_chars": 7730}
+
+====================================================================================================
+### scenario_6.json
+提问: 这次促销活动的效果为什么不如预期？
+conv=33 task=45 status=success result_id=45 poll=0.52s
+完成日志: 任务完成：场景「通用经营体检」，指标 9 项，证据 38 条，耗时 317ms
+路由日志: 场景路由|generic|通用经营体检|turn=2
+路由得分: 场景路由得分：[{'key': 'catalog', 'name': '商品目录质量归因', 'score': 0}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 2 轮，历史摘要=无，追问=是
+
+-- 工具调用链 --
+1 | db_query | success | 1ms | rows=1 | SELECT ROUND(SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN gmv ELSE 0 END), 2) AS base_gm…
+    summary: 返回 1 行数据，字段 base_gmv, anomaly_gmv, base_order_cnt, anomaly_order_cnt, base_refund, anomaly_refund。示例：base_gmv=11165493.54；anomaly_gmv=8277863.44；base_order_cnt=22648.0；anomaly_order_cnt=16873.0；base_refund=490568.27；anomaly_refund=643120.01
+2 | db_query | success | 1ms | rows=6 | SELECT ch.channel_name, ch.channel_type, ROUND(SUM(CASE WHEN s.stat_date BETWEEN '2026-09-01' AND '2026-09-15'…
+    summary: 返回 6 行数据，字段 channel_name, channel_type, base_gmv, anomaly_gmv。示例：channel_name=内容-种草；channel_type=content；base_gmv=2134943.09；anomaly_gmv=1926205.0
+3 | db_query | success | 7ms | rows=5 | SELECT c.category_name, ROUND(SUM(CASE WHEN r.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN r.sale_amou…
+    summary: 返回 5 行数据，字段 category_name, base_amount, anomaly_amount, anomaly_qty。示例：category_name=服饰鞋包；base_amount=3975752.0；anomaly_amount=3817195.0；anomaly_qty=16805.0
+4 | db_query | success | 2ms | rows=5 | SELECT c.category_name, ROUND(AVG(p.title_length), 1) AS avg_title_len, ROUND(AVG(p.image_count), 2) AS avg_im…
+    summary: 返回 5 行数据，字段 category_name, avg_title_len, avg_image_cnt, avg_attr_fill。示例：category_name=美妆个护；avg_title_len=11.4；avg_image_cnt=1.25；avg_attr_fill=36.3
+5 | text_search | success | 1ms | rows=3(命中) | keyword=归因 scope=knowledge limit=5
+    summary: 关键词「归因」命中 3 处（knowledge 3 条）。首条来自 知识库/01_归因分析方法论.md：# 经营归因分析方法论 ## 一、归因的四步法 1. **界定问题**：把模糊的业务抱怨转成可验证的量化命题。 - 反例：「最近转化不太好」 - 正例：「美妆个
+6 | result_generate | success | 0ms | rows=- | scene=generic metrics=9 evidence=38
+    summary: 已生成标准报告：关键指标 9 项、证据 38 条、结论 320 字
+
+-- 导出字节 --
+md: status=200 bytes=14715 ct=text/markdown; charset=utf-8
+json: status=200 bytes=17596 ct=application/json; charset=utf-8
+xlsx: status=200 bytes=11023 ct=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+-- 模块1 问题定义 --
+问题界定：用户提出「这次促销活动的效果为什么不如预期？」。该问题未命中系统预置的六大专有归因场景（商品目录质量 / 渠道投放效率 / 库存履约 / 用户口碑 / 退款售后 / 大盘下滑），因此系统走通用经营体检路径：先用大盘、渠道、品类三层结构定位异常区域，再给出进一步验证方向。
+
+-- 模块2 关键指标 --
+GMV | 8,277,863.44 | 元 | 异常期 2026-09-16 ~ 2026-09-30
+GMV 变化 | -25.86 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+订单量变化 | -25.5 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+退款金额变化 | 31.1 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+最大渠道 | 内容-种草 |  | 按异常期 GMV
+跌幅最大渠道 | 社媒-信息流 |  | 按异常期 GMV
+最大品类 | 服饰鞋包 |  | 按异常期销售额
+属性填充率最低品类 | 美妆个护 |  | 目录质量体检
+该品类属性填充率 | 36.3 | % | 目录质量体检
+
+-- 模块3 证据列表 --
+1 | 大盘经营概览（biz_sales_summary） | database | conf=0.94 | metric=GMV | base_gmv = 11165493.54；anomaly_gmv = 8277863.44；base_order_cnt = 22648.0；anomaly_order_cnt = 16873.0；base_refund = 490568.27；anomaly_refund = 643120.01
+2 | 渠道结构 | database | conf=0.92 | metric=渠道 GMV | channel_name = 内容-种草；channel_type = content；base_gmv = 2134943.09；anomaly_gmv = 1926205.0
+3 | 渠道结构 | database | conf=0.92 | metric=渠道 GMV | channel_name = 搜索-品牌词；channel_type = search；base_gmv = 2590680.92；anomaly_gmv = 1917945.61
+4 | 渠道结构 | database | conf=0.92 | metric=渠道 GMV | channel_name = 搜索-品类词；channel_type = search；base_gmv = 1732543.58；anomaly_gmv = 1692884.55
+5 | 渠道结构 | database | conf=0.92 | metric=渠道 GMV | channel_name = 直访；channel_type = direct；base_gmv = 1023491.98；anomaly_gmv = 1088507.01
+6 | 渠道结构 | database | conf=0.92 | metric=渠道 GMV | channel_name = 联盟-CPS；channel_type = alliance；base_gmv = 1024500.32；anomaly_gmv = 923989.52
+7 | 渠道结构 | database | conf=0.92 | metric=渠道 GMV | channel_name = 社媒-信息流；channel_type = social；base_gmv = 2659333.65；anomaly_gmv = 728331.75
+8 | 品类结构 | database | conf=0.92 | metric=品类销售额 | category_name = 服饰鞋包；base_amount = 3975752.0；anomaly_amount = 3817195.0；anomaly_qty = 16805.0
+9 | 品类结构 | database | conf=0.92 | metric=品类销售额 | category_name = 家居日用；base_amount = 2870742.0；anomaly_amount = 2957109.0；anomaly_qty = 17501.0
+10 | 品类结构 | database | conf=0.92 | metric=品类销售额 | category_name = 数码配件；base_amount = 2463918.0；anomaly_amount = 2421755.0；anomaly_qty = 17595.0
+11 | 品类结构 | database | conf=0.92 | metric=品类销售额 | category_name = 美妆个护；base_amount = 2214157.0；anomaly_amount = 2131392.0；anomaly_qty = 16648.0
+12 | 品类结构 | database | conf=0.92 | metric=品类销售额 | category_name = 食品生鲜；base_amount = 1609502.2；anomaly_amount = 1749613.9；anomaly_qty = 16782.0
+13 | 目录质量体检 | database | conf=0.88 | metric=目录质量分 | category_name = 美妆个护；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill = 36.3
+14 | 目录质量体检 | database | conf=0.88 | metric=目录质量分 | category_name = 数码配件；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill = 85.6
+15 | 目录质量体检 | database | conf=0.88 | metric=目录质量分 | category_name = 家居日用；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill = 86.3
+16 | 目录质量体检 | database | conf=0.88 | metric=目录质量分 | category_name = 服饰鞋包；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill = 87.7
+17 | 目录质量体检 | database | conf=0.88 | metric=目录质量分 | category_name = 食品生鲜；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill = 88.4
+18 | 知识库/01_归因分析方法论.md | knowledge | conf=0.8 | metric=分析方法论 | # 经营归因分析方法论 ## 一、归因的四步法 1. **界定问题**：把模糊的业务抱怨转成可验证的量化命题。 - 反例：「最近转化不太好」 - 正例：「美妆个护品类曝光点击率在 9 月 16-30 日由 4.2% 降至 2.1%」 2. **拆解结构**：用乘法公式把结果指标拆成可控因子。 -
+19 | 知识库/02_电商核心指标口径.md | knowledge | conf=0.8 | metric=分析方法论 | # 电商核心指标口径定义 统一的指标口径是归因分析的前提。口径不一致时，两边的数字对比毫无意义。 ## 一、流量与转化 | 指标 | 口径 | 公式 | | --- | --- | --- | | 曝光量 | 商品卡在各类场景被展示的次数 | 直接累加 | | 点击量 | 商品卡被点击的次数 | 直接累加 | |
+20 | 知识库/05_用户口碑与退款诊断.md | knowledge | conf=0.8 | metric=分析方法论 | 值 2 倍进入观察名单 4. **评论区关键词聚类**：每日对新出现的差评做标签聚类， 新标签出现即人工审阅 ## 六、常见误判 - **把退款率上升归因为「用户变挑剔」**：这是最危险的归因， 因为它导向「什么都不做」。正确做法是先看责任归属。 - **只处理退款不处理根因**：退款是症状，责任归属才是
+21 | 渠道结构（biz_channel + biz_sales_summary） | database | conf=0.92 | metric=渠道 GMV | channel_name = 内容-种草；channel_type = content；base_gmv = 2134943.09；anomaly_gmv = 1926205.0
+22 | 渠道结构（biz_channel + biz_sales_summary） | database | conf=0.92 | metric=渠道 GMV | channel_name = 搜索-品牌词；channel_type = search；base_gmv = 2590680.92；anomaly_gmv = 1917945.61
+23 | 渠道结构（biz_channel + biz_sales_summary） | database | conf=0.92 | metric=渠道 GMV | channel_name = 搜索-品类词；channel_type = search；base_gmv = 1732543.58；anomaly_gmv = 1692884.55
+24 | 渠道结构（biz_channel + biz_sales_summary） | database | conf=0.92 | metric=渠道 GMV | channel_name = 直访；channel_type = direct；base_gmv = 1023491.98；anomaly_gmv = 1088507.01
+25 | 渠道结构（biz_channel + biz_sales_summary） | database | conf=0.92 | metric=渠道 GMV | channel_name = 联盟-CPS；channel_type = alliance；base_gmv = 1024500.32；anomaly_gmv = 923989.52
+26 | 品类结构（biz_sales + biz_category） | database | conf=0.92 | metric=品类销售额 | category_name = 服饰鞋包；base_amount = 3975752.0；anomaly_amount = 3817195.0；anomaly_qty = 16805.0
+27 | 品类结构（biz_sales + biz_category） | database | conf=0.92 | metric=品类销售额 | category_name = 家居日用；base_amount = 2870742.0；anomaly_amount = 2957109.0；anomaly_qty = 17501.0
+28 | 品类结构（biz_sales + biz_category） | database | conf=0.92 | metric=品类销售额 | category_name = 数码配件；base_amount = 2463918.0；anomaly_amount = 2421755.0；anomaly_qty = 17595.0
+29 | 品类结构（biz_sales + biz_category） | database | conf=0.92 | metric=品类销售额 | category_name = 美妆个护；base_amount = 2214157.0；anomaly_amount = 2131392.0；anomaly_qty = 16648.0
+30 | 品类结构（biz_sales + biz_category） | database | conf=0.92 | metric=品类销售额 | category_name = 食品生鲜；base_amount = 1609502.2；anomaly_amount = 1749613.9；anomaly_qty = 16782.0
+31 | 目录质量体检（biz_product） | database | conf=0.88 | metric=目录质量分 | category_name = 美妆个护；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill = 36.3
+32 | 目录质量体检（biz_product） | database | conf=0.88 | metric=目录质量分 | category_name = 数码配件；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill = 85.6
+33 | 目录质量体检（biz_product） | database | conf=0.88 | metric=目录质量分 | category_name = 家居日用；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill = 86.3
+34 | 目录质量体检（biz_product） | database | conf=0.88 | metric=目录质量分 | category_name = 服饰鞋包；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill = 87.7
+35 | 目录质量体检（biz_product） | database | conf=0.88 | metric=目录质量分 | category_name = 食品生鲜；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill = 88.4
+36 | 知识库方法论检索 | database | conf=0.8 | metric=分析方法论 | source_type = knowledge；source_name = 知识库/01_归因分析方法论.md；snippet = # 经营归因分析方法论 ## 一、归因的四步法 1. **界定问题**：把模糊的业务抱怨转成可验证的量化命题。 - 反例：「最近转化不太好」 - 正例：「美妆个护品类曝光点击率在 9 月 16-30 日由 4.2% 降至 2.1%」 2. **拆解结构**：用乘法公式把结果指标拆成可控因子。 -
+37 | 知识库方法论检索 | database | conf=0.8 | metric=分析方法论 | source_type = knowledge；source_name = 知识库/02_电商核心指标口径.md；snippet = # 电商核心指标口径定义 统一的指标口径是归因分析的前提。口径不一致时，两边的数字对比毫无意义。 ## 一、流量与转化 | 指标 | 口径 | 公式 | | --- | --- | --- | | 曝光量 | 商品卡在各类场景被展示的次数 | 直接累加 | | 点击量 | 商品卡被点击的次数 | 直接累加 | |
+38 | 知识库方法论检索 | database | conf=0.8 | metric=分析方法论 | source_type = knowledge；source_name = 知识库/05_用户口碑与退款诊断.md；snippet = 值 2 倍进入观察名单 4. **评论区关键词聚类**：每日对新出现的差评做标签聚类， 新标签出现即人工审阅 ## 六、常见误判 - **把退款率上升归因为「用户变挑剔」**：这是最危险的归因， 因为它导向「什么都不做」。正确做法是先看责任归属。 - **只处理退款不处理根因**：退款是症状，责任归属才是
+
+-- 模块4 结论 --
+结论：本轮走通用体检路径，得出的是**结构性观察**而非确定性归因。
+
+- 大盘：GMV 由 11,165,493.54 元变为 8,277,863.44 元（-25.86%），订单量变化 -25.50%，退款金额变化 +31.10%；
+- 渠道：GMV 最高的是「内容-种草」，最低的是「社媒-信息流」，渠道间差距明显，建议优先复核低贡献渠道的投放与承接效率；
+- 品类：销售额最高的是「服饰鞋包」，目录质量最弱的是「美妆个护」（属性填充率仅 36.3%），该品类存在「有货但卖不动」的典型特征。
+
+未能给出确定性归因的原因：本轮问题未匹配到预置场景的知识规则，系统只做了结构性扫描，没有执行场景化的深度下钻（如漏斗拆解、责任归属判定）。
+
+-- 模块5 待补充数据 --
+要把结论升级为确定性归因，还需要补充：
+- 更明确的问题边界（具体指标、时间范围、影响对象），以便路由到专有场景做深度下钻
+- 对应的业务明细数据（如订单明细、流量来源明细、操作日志）
+- 若有相关报表或截图，可通过附件上传，系统会纳入证据链一起分析
+
+-- 模块6 下一步建议 --
+- **建议 1**：把问题改写得更具体，例如「美妆个护品类 9 月下旬点击率为什么从 4.2% 掉到 2.1%」，系统会自动路由到专有场景并给出确定性归因；
+- **建议 2**：先针对上方「最低贡献渠道」与「目录质量最弱品类」做一次专项排查；
+- **建议 3**：上传相关明细文件（CSV/Excel）后再次提问，可显著提升归因精度；
+- **建议 4**：若属于新业务场景，可把该问题沉淀为新的场景规则，后续同类问题即可自动完成完整归因。
+
+result_file_path: exports/2/33/分析报告_任务45_20261008_193100.md
+created_at: 2026-10-08T19:31:00
+module_sizes: {"problem_definition_chars": 140, "key_metrics_count": 9, "evidence_list_count": 38, "conclusion_text_chars": 320, "missing_data_text_chars": 125, "next_action_text_chars": 223, "result_markdown_chars": 8421}
+
+====================================================================================================
+### followup_reuse.json
+提问: 那这个问题严重吗？需要马上处理吗？
+conv=28 task=46 status=success result_id=46 poll=0.52s
+完成日志: 任务完成：场景「商品目录质量归因」，指标 12 项，证据 27 条，耗时 414ms
+路由日志: 场景路由|catalog|商品目录质量归因|turn=3
+路由得分: 场景路由得分：[{'key': 'catalog', 'name': '商品目录质量归因', 'score': 0}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'inventory', 'name': '库存与履约归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 3 轮，历史摘要=无，追问=是
+
+-- 工具调用链 --
+1 | db_query | success | 8ms | rows=5 | SELECT c.category_name, ROUND(100 * SUM(CASE WHEN pc.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN pc.c…
+    summary: 返回 5 行数据，字段 category_name, base_ctr_pct, anomaly_ctr_pct, anomaly_exposure。示例：category_name=服饰鞋包；base_ctr_pct=5.51；anomaly_ctr_pct=5.45；anomaly_exposure=530284.0
+2 | db_query | success | 1ms | rows=5 | SELECT c.category_name, COUNT(*) AS sku_cnt, ROUND(AVG(p.title_length), 1) AS avg_title_len, ROUND(AVG(p.image…
+    summary: 返回 5 行数据，字段 category_name, sku_cnt, avg_title_len, avg_image_cnt, avg_attr_fill_rate。示例：category_name=美妆个护；sku_cnt=12；avg_title_len=11.4；avg_image_cnt=1.25；avg_attr_fill_rate=36.3
+3 | db_query | success | 4ms | rows=6 | SELECT se.search_keyword, SUM(CASE WHEN se.stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN se.search_cnt …
+    summary: 返回 6 行数据，字段 search_keyword, base_search, base_zero, anomaly_search, anomaly_zero。示例：search_keyword=氨基酸洁面；base_search=50017.0；base_zero=4448.0；anomaly_search=53199.0；anomaly_zero=17495.0
+4 | db_query | success | 2ms | rows=1 | SELECT ROUND(100 * SUM(CASE WHEN stat_date BETWEEN '2026-09-16' AND '2026-09-30' THEN order_cnt ELSE 0 END) / …
+    summary: 返回 1 行数据，字段 anomaly_click_to_order_pct, base_click_to_order_pct。示例：anomaly_click_to_order_pct=1.14；base_click_to_order_pct=2.65
+5 | text_search | success | 2ms | rows=8(命中) | keyword=描述不符 scope=review limit=8
+    summary: 关键词「描述不符」命中 8 处（database 8 条）。首条来自 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）：标题写保质期到 2028 年，收到的只有 2026 年 10 月
+6 | file_write | success | 3ms | rows=- | file_name=品类CTR对比.csv format=table content=@前序步骤
+    summary: 已写出中间产物 品类CTR对比_20261008_193101.csv（169 B）到工作区
+7 | result_generate | success | 0ms | rows=- | scene=catalog metrics=12 evidence=27
+    summary: 已生成标准报告：关键指标 12 项、证据 27 条、结论 549 字
+
+-- 导出字节 --
+md: status=200 bytes=11899 ct=text/markdown; charset=utf-8
+json: status=200 bytes=14532 ct=application/json; charset=utf-8
+xlsx: status=200 bytes=10306 ct=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+-- 模块1 问题定义 --
+用户在「那这个问题严重吗？需要马上处理吗？」中反映的问题，经数据核对定位为：
+美妆个护品类的曝光点击率在异常期（2026-09-16 ~ 2026-09-30）由 4.2% 下滑至 2.09%，降幅 50.24%；同期其他品类 CTR 稳定在 5.45%~5.52%，说明不是全站流量问题，而是该品类的商品呈现问题。
+
+-- 模块2 关键指标 --
+美妆个护 曝光点击率 | 2.09 | % | 异常期 2026-09-16 ~ 2026-09-30
+美妆个护 曝光点击率（基准） | 4.2 | % | 基准期 2026-09-01 ~ 2026-09-15
+点击率变化幅度 | -50.24 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+其他品类 CTR 区间 | 5.45%~5.52% | % | 异常期 2026-09-16 ~ 2026-09-30
+平均标题字数 | 11.4 | 字 | 美妆个护 全量 SKU
+其他品类平均标题字数 | 21.8 | 字 | 对比组
+平均主图数量 | 1.25 | 张 | 美妆个护 全量 SKU
+其他品类平均主图数量 | 4.81 | 张 | 对比组
+属性填充率 | 36.3 | % | 美妆个护 全量 SKU
+其他品类属性填充率 | 87 | % | 对比组
+点击到下单转化率 | 1.14 | % | 异常期 2026-09-16 ~ 2026-09-30
+点击到下单转化率变化 | -56.98 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+
+-- 模块3 证据列表 --
+1 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 服饰鞋包；base_ctr_pct = 5.51；anomaly_ctr_pct = 5.45；anomaly_exposure = 530284.0
+2 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 家居日用；base_ctr_pct = 5.48；anomaly_ctr_pct = 5.52；anomaly_exposure = 524072.0
+3 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 数码配件；base_ctr_pct = 5.47；anomaly_ctr_pct = 5.45；anomaly_exposure = 519743.0
+4 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 食品生鲜；base_ctr_pct = 5.43；anomaly_ctr_pct = 5.49；anomaly_exposure = 519899.0
+5 | 品类曝光点击率对比（biz_product_click） | database | conf=0.96 | metric=商品点击率 CTR | category_name = 美妆个护；base_ctr_pct = 4.2；anomaly_ctr_pct = 2.09；anomaly_exposure = 522429.0
+6 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 美妆个护；sku_cnt = 12；avg_title_len = 11.4；avg_image_cnt = 1.25；avg_attr_fill_rate = 36.3
+7 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 服饰鞋包；sku_cnt = 12；avg_title_len = 19.8；avg_image_cnt = 4.83；avg_attr_fill_rate = 87.7
+8 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 食品生鲜；sku_cnt = 12；avg_title_len = 20.7；avg_image_cnt = 4.67；avg_attr_fill_rate = 88.4
+9 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 家居日用；sku_cnt = 12；avg_title_len = 21.1；avg_image_cnt = 4.92；avg_attr_fill_rate = 86.3
+10 | 商品目录质量字段对比（biz_product） | database | conf=0.93 | metric=目录质量分 | category_name = 数码配件；sku_cnt = 12；avg_title_len = 25.6；avg_image_cnt = 4.83；avg_attr_fill_rate = 85.6
+11 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 氨基酸洁面；base_search = 50017.0；base_zero = 4448.0；anomaly_search = 53199.0；anomaly_zero = 17495.0
+12 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 玻尿酸精华；base_search = 50690.0；base_zero = 4546.0；anomaly_search = 51066.0；anomaly_zero = 17165.0
+13 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 神经酰胺；base_search = 53249.0；base_zero = 4475.0；anomaly_search = 54537.0；anomaly_zero = 16637.0
+14 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 视黄醇眼霜；base_search = 53014.0；base_zero = 2077.0；anomaly_search = 50876.0；anomaly_zero = 2943.0
+15 | 零结果搜索词统计（biz_search_exposure） | database | conf=0.91 | metric=搜索无结果率 | search_keyword = 水杨酸洁面；base_search = 53855.0；base_zero = 2032.0；anomaly_search = 52423.0；anomaly_zero = 2875.0
+16 | 点击到下单转化率（biz_product_conversion） | database | conf=0.88 | metric=点击下单转化率 | 基准期点击下单转化率 2.65%，异常期 1.14%，相对变化 -56.98%
+17 | 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+18 | 用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+19 | 用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+20 | 用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+21 | 用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符） | database | conf=0.85 | metric=负面反馈占比 | 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+22 | 点击到下单转化率（biz_product_conversion） | database | conf=0.88 | metric=点击下单转化率 | anomaly_click_to_order_pct = 1.14；base_click_to_order_pct = 2.65
+23 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001392（商品 P0021，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+24 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001375（商品 P0002，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+25 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001324（商品 P0053，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+26 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001279（商品 P0007，情绪 negative，标签 描述不符）；snippet = 标题写保质期到 2028 年，收到的只有 2026 年 10 月
+27 | 用户评论原文检索 | database | conf=0.85 | metric=负面反馈占比 | source_type = database；source_name = 用户评论 #RV0001226（商品 P0001，情绪 negative，标签 描述不符）；snippet = 详情页写 100ml，实际收到只有 80ml，规格标错了吧
+
+-- 模块4 结论 --
+归因结论：美妆个护品类曝光点击率下滑 50.24%，由 4.2% 降至 2.09%，属于**品类级商品呈现问题**，而非流量总量问题（同期其他品类 CTR 稳定在 5.45%~5.52%）。
+
+具体证据支持以下三条主因：
+
+- 标题过短：平均 11.4 字，显著低于其他品类的 21.8 字，关键词覆盖不足，搜索匹配度下降
+- 主图数量不足：平均 1.25 张，其他品类为 4.81 张，缺少多角度/场景图，首屏吸引力弱
+- 属性填充率偏低：36.3% 对比其他品类 87.0%，筛选与推荐场景下大量商品无法被召回
+- 高意图搜索词承接失败：「氨基酸洁面」零结果次数由 4448 次升至 17495 次（放大 3.93 倍）；「玻尿酸精华」零结果次数由 4546 次升至 17165 次（放大 3.78 倍）；「神经酰胺」零结果次数由 4475 次升至 16637 次（放大 3.72 倍）
+- 转化同步走弱：点击到下单转化率由 2.65% 降至 1.14%（-56.98%），说明进来的流量质量也随之下滑
+
+因果链条：目录信息缺失（标题短 / 主图少 / 属性空）→ 搜索与推荐召回不足 + 商品卡吸引力下降→ 曝光点击率由 4.2% 跌至 2.09% → 点击下单转化率同步下降 56.98%。
+
+-- 模块5 待补充数据 --
+本次分析已覆盖曝光、点击、转化、搜索、评论五类数据。仍存在以下数据缺口：
+- 缺少商品卡改版/主图下架的操作日志，无法确认变更发生的准确时点
+- 缺少竞品同品类价格与促销力度数据，无法完全排除外部竞争因素
+- 缺少站内推荐流与搜索流的分渠道曝光拆分，两条流量的贡献占比未量化
+
+-- 模块6 下一步建议 --
+- **紧急（24 小时内）**：筛出 美妆个护 品类中标题字数 < 15 字或主图 < 3 张的 SKU，按曝光量降序优先补齐，预计可恢复 30% 以上的 CTR 损失；
+- **本周内**：为「氨基酸洁面」等高意图零结果词建立兜底词表与召回规则，先止血再优化；
+- **本周内**：把属性填充率纳入商品上架卡点（低于 80% 不允许上架），并批量补齐存量 SKU；
+- **持续**：为该品类建立 CTR 日监控看板，跌幅超过 15% 自动告警，避免同类问题再次潜伏。
+
+result_file_path: exports/2/28/分析报告_任务46_20261008_193101.md
+created_at: 2026-10-08T19:31:01
+module_sizes: {"problem_definition_chars": 158, "key_metrics_count": 12, "evidence_list_count": 27, "conclusion_text_chars": 549, "missing_data_text_chars": 137, "next_action_text_chars": 236, "result_markdown_chars": 6700}
+
+====================================================================================================
+### followup_suggested.json
+提问: 那库存和履约方面有没有影响？
+conv=34 task=48 status=success result_id=48 poll=0.52s
+完成日志: 任务完成：场景「库存与履约归因」，指标 6 项，证据 28 条，耗时 366ms
+路由日志: 场景路由|inventory|库存与履约归因|turn=3
+路由得分: 场景路由得分：[{'key': 'inventory', 'name': '库存与履约归因', 'score': 6}, {'key': 'catalog', 'name': '商品目录质量归因', 'score': 0}, {'key': 'market', 'name': '渠道投放效率归因', 'score': 0}, {'key': 'feedback', 'name': '用户反馈与口碑归因', 'score': 0}, {'key': 'refund', 'name': '退款与售后归因', 'score': 0}, {'key': 'growth', 'name': '大盘经营下滑归因', 'score': 0}, {'key': 'generic', 'name': '通用经营体检', 'score': 0}]；多轮上下文：第 3 轮，历史摘要=无，追问=是
+
+-- 工具调用链 --
+1 | db_query | success | 10ms | rows=5 | SELECT c.category_name, COUNT(DISTINCT CASE WHEN i.stat_date BETWEEN '2026-09-01' AND '2026-09-15' AND i.avail…
+    summary: 返回 5 行数据，字段 category_name, base_shortage_sku, anomaly_shortage_sku, total_sku。示例：category_name=美妆个护；base_shortage_sku=0；anomaly_shortage_sku=12；total_sku=12
+2 | db_query | success | 12ms | rows=5 | SELECT c.category_name, ROUND(AVG(i.on_hand_qty), 0) AS avg_on_hand_qty, ROUND(AVG(i.locked_qty), 0) AS avg_lo…
+    summary: 返回 5 行数据，字段 category_name, avg_on_hand_qty, avg_locked_qty, avg_daily_sale, days_of_supply。示例：category_name=服饰鞋包；avg_on_hand_qty=1306.0；avg_locked_qty=39.0；avg_daily_sale=3.11；days_of_supply=419.7
+3 | db_query | success | 1ms | rows=12 | SELECT p.product_id, p.product_name, c.category_name, i.stat_date, i.on_hand_qty, i.available_qty, i.safety_st…
+    summary: 返回 12 行数据，字段 product_id, product_name, category_name, stat_date, on_hand_qty, available_qty。示例：product_id=P0009；product_name=卸妆油；category_name=美妆个护；stat_date=2026-09-30；on_hand_qty=77；available_qty=4
+4 | db_query | success | 9ms | rows=3 | SELECT outbound_type, SUM(CASE WHEN stat_date BETWEEN '2026-09-01' AND '2026-09-15' THEN outbound_qty ELSE 0 E…
+    summary: 返回 3 行数据，字段 outbound_type, base_qty, anomaly_qty。示例：outbound_type=sale；base_qty=89227.0；anomaly_qty=90801.0
+5 | file_write | success | 4ms | rows=- | file_name=缺货缺口明细.csv format=table content=@前序步骤
+    summary: 已写出中间产物 缺货缺口明细_20261008_193102.csv（729 B）到工作区
+6 | result_generate | success | 0ms | rows=- | scene=inventory metrics=6 evidence=28
+    summary: 已生成标准报告：关键指标 6 项、证据 28 条、结论 320 字
+
+-- 导出字节 --
+md: status=200 bytes=11442 ct=text/markdown; charset=utf-8
+json: status=200 bytes=13490 ct=application/json; charset=utf-8
+xlsx: status=200 bytes=9584 ct=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+-- 模块1 问题定义 --
+针对「那库存和履约方面有没有影响？」，把问题界定为库存健康度问题：
+异常期（2026-09-16 ~ 2026-09-30）低于安全库存的 SKU 占比由 0.0% 升至 100.0%，缺货 SKU 数从 0 个增至 12 个，其中「美妆个护」缺口最大。
+
+-- 模块2 关键指标 --
+低于安全库存 SKU 数 | 12 | 个 | 异常期 2026-09-16 ~ 2026-09-30
+低于安全库存 SKU 数（基准） | 0 | 个 | 基准期 2026-09-01 ~ 2026-09-15
+缺货 SKU 占比 | 100 | % | 异常期 2026-09-16 ~ 2026-09-30
+缺货 SKU 占比变化 | 0 | % | 基准期 2026-09-01 ~ 2026-09-15 vs 异常期 2026-09-16 ~ 2026-09-30
+服饰鞋包 库存可支撑天数 | 419.7 | 天 | 积压最严重品类
+美妆个护 库存可支撑天数 | 26.6 | 天 | 缺货最严重品类
+
+-- 模块3 证据列表 --
+1 | 品类缺货 SKU 统计（biz_inventory） | database | conf=0.95 | metric=缺货 SKU 数 | category_name = 美妆个护；base_shortage_sku = 0；anomaly_shortage_sku = 12；total_sku = 12
+2 | 品类缺货 SKU 统计（biz_inventory） | database | conf=0.95 | metric=缺货 SKU 数 | category_name = 家居日用；base_shortage_sku = 0；anomaly_shortage_sku = 0；total_sku = 12
+3 | 品类缺货 SKU 统计（biz_inventory） | database | conf=0.95 | metric=缺货 SKU 数 | category_name = 数码配件；base_shortage_sku = 0；anomaly_shortage_sku = 0；total_sku = 12
+4 | 品类缺货 SKU 统计（biz_inventory） | database | conf=0.95 | metric=缺货 SKU 数 | category_name = 服饰鞋包；base_shortage_sku = 0；anomaly_shortage_sku = 0；total_sku = 12
+5 | 品类缺货 SKU 统计（biz_inventory） | database | conf=0.95 | metric=缺货 SKU 数 | category_name = 食品生鲜；base_shortage_sku = 0；anomaly_shortage_sku = 0；total_sku = 12
+6 | 库存周转与可支撑天数 | database | conf=0.92 | metric=库存可支撑天数 | category_name = 服饰鞋包；avg_on_hand_qty = 1306.0；avg_locked_qty = 39.0；avg_daily_sale = 3.11；days_of_supply = 419.7
+7 | 库存周转与可支撑天数 | database | conf=0.92 | metric=库存可支撑天数 | category_name = 家居日用；avg_on_hand_qty = 1275.0；avg_locked_qty = 40.0；avg_daily_sale = 3.24；days_of_supply = 393.3
+8 | 库存周转与可支撑天数 | database | conf=0.92 | metric=库存可支撑天数 | category_name = 食品生鲜；avg_on_hand_qty = 524.0；avg_locked_qty = 51.0；avg_daily_sale = 3.11；days_of_supply = 168.4
+9 | 库存周转与可支撑天数 | database | conf=0.92 | metric=库存可支撑天数 | category_name = 数码配件；avg_on_hand_qty = 530.0；avg_locked_qty = 50.0；avg_daily_sale = 3.26；days_of_supply = 162.5
+10 | 库存周转与可支撑天数 | database | conf=0.92 | metric=库存可支撑天数 | category_name = 美妆个护；avg_on_hand_qty = 82.0；avg_locked_qty = 65.0；avg_daily_sale = 3.08；days_of_supply = 26.6
+11 | 缺货商品明细 | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0009；product_name = 卸妆油；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 77；available_qty = 4；safety_stock_qty = 192；in_transit_qty = 15
+12 | 缺货商品明细 | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0001；product_name = 氨基酸洁面乳；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 93；available_qty = 28；safety_stock_qty = 207；in_transit_qty = 6
+13 | 缺货商品明细 | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0004；product_name = 视黄醇眼霜；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 92；available_qty = 3；safety_stock_qty = 177；in_transit_qty = 12
+14 | 缺货商品明细 | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0003；product_name = 烟酰胺面霜；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 81；available_qty = 12；safety_stock_qty = 173；in_transit_qty = 11
+15 | 缺货商品明细 | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0002；product_name = 玻尿酸精华液；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 117；available_qty = 29；safety_stock_qty = 186；in_transit_qty = 3
+16 | 出库结构（biz_outbound） | database | conf=0.85 | metric=出库量 | outbound_type = sale；base_qty = 89227.0；anomaly_qty = 90801.0
+17 | 出库结构（biz_outbound） | database | conf=0.85 | metric=出库量 | outbound_type = transfer；base_qty = 5402.0；anomaly_qty = 6393.0
+18 | 出库结构（biz_outbound） | database | conf=0.85 | metric=出库量 | outbound_type = scrap；base_qty = 4283.0；anomaly_qty = 2752.0
+19 | 库存周转与可支撑天数（biz_inventory + biz_sales） | database | conf=0.92 | metric=库存可支撑天数 | category_name = 服饰鞋包；avg_on_hand_qty = 1306.0；avg_locked_qty = 39.0；avg_daily_sale = 3.11；days_of_supply = 419.7
+20 | 库存周转与可支撑天数（biz_inventory + biz_sales） | database | conf=0.92 | metric=库存可支撑天数 | category_name = 家居日用；avg_on_hand_qty = 1275.0；avg_locked_qty = 40.0；avg_daily_sale = 3.24；days_of_supply = 393.3
+21 | 库存周转与可支撑天数（biz_inventory + biz_sales） | database | conf=0.92 | metric=库存可支撑天数 | category_name = 食品生鲜；avg_on_hand_qty = 524.0；avg_locked_qty = 51.0；avg_daily_sale = 3.11；days_of_supply = 168.4
+22 | 库存周转与可支撑天数（biz_inventory + biz_sales） | database | conf=0.92 | metric=库存可支撑天数 | category_name = 数码配件；avg_on_hand_qty = 530.0；avg_locked_qty = 50.0；avg_daily_sale = 3.26；days_of_supply = 162.5
+23 | 库存周转与可支撑天数（biz_inventory + biz_sales） | database | conf=0.92 | metric=库存可支撑天数 | category_name = 美妆个护；avg_on_hand_qty = 82.0；avg_locked_qty = 65.0；avg_daily_sale = 3.08；days_of_supply = 26.6
+24 | 缺货商品明细（biz_inventory + biz_product） | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0009；product_name = 卸妆油；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 77；available_qty = 4；safety_stock_qty = 192；in_transit_qty = 15
+25 | 缺货商品明细（biz_inventory + biz_product） | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0001；product_name = 氨基酸洁面乳；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 93；available_qty = 28；safety_stock_qty = 207；in_transit_qty = 6
+26 | 缺货商品明细（biz_inventory + biz_product） | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0004；product_name = 视黄醇眼霜；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 92；available_qty = 3；safety_stock_qty = 177；in_transit_qty = 12
+27 | 缺货商品明细（biz_inventory + biz_product） | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0003；product_name = 烟酰胺面霜；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 81；available_qty = 12；safety_stock_qty = 173；in_transit_qty = 11
+28 | 缺货商品明细（biz_inventory + biz_product） | database | conf=0.9 | metric=单 SKU 缺口 | product_id = P0002；product_name = 玻尿酸精华液；category_name = 美妆个护；stat_date = 2026-09-30；on_hand_qty = 117；available_qty = 29；safety_stock_qty = 186；in_transit_qty = 3
+
+-- 模块4 结论 --
+归因结论：本次问题呈现「结构性失衡」——总量不缺，但结构错配。缺货 SKU 占比由 0.0% 升至 100.0%，同时「服饰鞋包」的库存可支撑天数高达 419.7 天（严重积压），而「美妆个护」仅 26.6 天（随时断货）。
+
+具体表现：
+
+- 缺货集中在「美妆个护」，异常期有 12 个 SKU 低于安全库存；
+- 积压最严重的是「服饰鞋包」，平均在库 1306 件，按当前日均销量需 419.7 天才能消化；
+- 出库结构以 sale 为主，说明货在动，但动到了错误的品类上。
+
+因果链条：补货策略未按动销分层 → 畅销品补货不及时、滞销品持续入库 → 畅销品缺货损失销售机会，滞销品占用现金与仓容 → 整体周转效率下降、履约体验变差。
+
+-- 模块5 待补充数据 --
+以下数据缺口会限制结论精度：
+- 缺少采购在途订单的预计到货时间（biz_inventory.in_transit_qty 只有数量没有到货日）
+- 缺少缺货期间的「缺货损失金额」埋点，无法量化直接销售损失
+- 缺少仓库维度的人力与产能数据，无法区分「无货」与「有货但发不出」
+
+-- 模块6 下一步建议 --
+- **今天**：按「日均销量 × 30 天」重算安全库存，把「美妆个护」中缺口最大的 5 个 SKU 立刻加急补货；
+- **3 天内**：对「服饰鞋包」启动促销/捆绑清库，目标把可支撑天数压到 45 天以内；
+- **一周内**：建立 ABC 分层补货规则——A 类品（贡献 70% 销量）安全库存上浮 30%、补货周期缩短至 3 天；C 类品改为小批量高频补货，禁止大批量入库；
+- **持续**：上线「缺货 SKU 数 / 库存可支撑天数」双指标日监控，任一品类可支撑天数低于 7 天或高于 90 天自动告警。
+
+result_file_path: exports/2/34/分析报告_任务48_20261008_193102.md
+created_at: 2026-10-08T19:31:02
+module_sizes: {"problem_definition_chars": 127, "key_metrics_count": 6, "evidence_list_count": 28, "conclusion_text_chars": 320, "missing_data_text_chars": 138, "next_action_text_chars": 259, "result_markdown_chars": 7091}

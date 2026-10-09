@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>统一认证中心 · 登录</title>
+    <style>
+        :root {
+            --bg: #0d1421;
+            --panel: #16203200;
+            --card: #162032;
+            --border: #26334d;
+            --text: #e6edf7;
+            --muted: #8b9cb8;
+            --primary: #2f6fed;
+            --primary-hover: #3f7ffd;
+            --danger: #ff5c5c;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(1200px 600px at 20% -10%, #1b2a47 0%, #0d1421 55%, #080d16 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+        }
+
+        .card {
+            width: 940px;
+            max-width: calc(100vw - 40px);
+            display: grid;
+            grid-template-columns: 1.05fr 1fr;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 24px 72px rgba(0, 0, 0, .55);
+        }
+
+        .brand {
+            padding: 44px 40px;
+            background: linear-gradient(160deg, #1c2c4d 0%, #14203a 60%, #101a2e 100%);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .brand .logo {
+            width: 46px; height: 46px; border-radius: 12px;
+            background: linear-gradient(135deg, #2f6fed, #23c4b8);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 20px; letter-spacing: -.5px;
+        }
+
+        .brand h1 { font-size: 22px; margin: 22px 0 10px; }
+        .brand p  { color: var(--muted); font-size: 13px; line-height: 1.9; margin: 0; }
+        .brand ul { color: var(--muted); font-size: 12.5px; line-height: 2; padding-left: 18px; margin: 18px 0 0; }
+        .brand .ver { color: #5d6f8c; font-size: 12px; }
+
+        .form { padding: 44px 40px; }
+
+        .form h2 { font-size: 17px; margin: 0 0 6px; }
+        .form .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 24px; }
+
+        label { display: block; font-size: 12.5px; color: var(--muted); margin: 0 0 7px; }
+
+        input[type=text], input[type=password] {
+            width: 100%; padding: 11px 13px; border-radius: 9px;
+            border: 1px solid var(--border); background: #0e1726; color: var(--text);
+            font-size: 14px; outline: none; transition: border-color .15s, box-shadow .15s;
+        }
+
+        input[type=text]:focus, input[type=password]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(47, 111, 237, .18);
+        }
+
+        .field { margin-bottom: 16px; }
+
+        button {
+            width: 100%; padding: 12px; border: 0; border-radius: 9px;
+            background: var(--primary); color: #fff; font-size: 14.5px; font-weight: 600;
+            cursor: pointer; transition: background .15s, transform .05s;
+        }
+
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: translateY(1px); }
+
+        .alert {
+            background: rgba(255, 92, 92, .12);
+            border: 1px solid rgba(255, 92, 92, .4);
+            color: #ffb3b3;
+            padding: 10px 13px; border-radius: 8px;
+            font-size: 12.5px; margin-bottom: 18px;
+        }
+
+        .accounts { margin-top: 26px; border-top: 1px solid var(--border); padding-top: 18px; }
+        .accounts .t { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+        .accounts .row {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 12px; padding: 7px 10px; border-radius: 7px;
+            background: #0e1726; margin-bottom: 6px; cursor: pointer;
+            border: 1px solid transparent; transition: border-color .15s;
+        }
+        .accounts .row:hover { border-color: var(--primary); }
+        .accounts code { color: #7cc4ff; font-size: 11.5px; }
+        .accounts .role { color: #5d6f8c; }
+
+        .scope {
+            margin-top: 18px; font-size: 11.5px; color: #5d6f8c; line-height: 1.8;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="brand">
+        <div>
+            <div class="logo">JY</div>
+            <h1>统一认证中心</h1>
+            <p>经营多轮归因分析系统 · 第三方授权登录</p>
+            <ul>
+                <li>OAuth2 授权码模式（authorization_code）</li>
+                <li>登录会话全生命周期管理</li>
+                <li>访问令牌内省与吊销</li>
+            </ul>
+        </div>
+        <div class="ver">认证中心 v{{ app_version }}</div>
+    </div>
+
+    <div class="form">
+        <h2>登录以授权</h2>
+        <div class="sub">应用「{{ client_name }}」请求访问你的账号</div>
+
+        {% if error %}
+        <div class="alert">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/oauth/login" id="loginForm">
+            <input type="hidden" name="client_id" value="{{ client_id }}">
+            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+            <input type="hidden" name="scope" value="{{ scope }}">
+            <input type="hidden" name="state" value="{{ state }}">
+
+            <div class="field">
+                <label for="username">账号</label>
+                <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+            </div>
+
+            <div class="field">
+                <label for="password">口令</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+
+            <button type="submit">授权并登录</button>
+        </form>
+
+        <div class="accounts">
+            <div class="t">演示账号（点击自动填充）</div>
+            {% for acc in demo_accounts %}
+            <div class="row" data-u="{{ acc.username }}" data-p="{{ acc.password }}">
+                <span><code>{{ acc.username }}</code> / <code>{{ acc.password }}</code></span>
+                <span class="role">{{ acc.role }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="scope">
+            请求范围：{{ scope }}<br>
+            回调地址：{{ redirect_uri }}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.accounts .row').forEach(function (el) {
+        el.addEventListener('click', function () {
+            document.getElementById('username').value = el.dataset.u;
+            document.getElementById('password').value = el.dataset.p;
+        });
+    });
+</script>
+</body>
+</html>
